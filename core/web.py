@@ -1273,7 +1273,7 @@ input.invalid{border-color:var(--red) !important;}
       js_run: 'Join',
       js_result: '{ok}/{total} accounts joined.',
       js_need_invite: 'Paste an invite link first.',
-      js_captcha_warn: 'Captcha-required errors mean Discord wants that account to prove it is human; solve it manually in Discord and try again.'
+      js_captcha_warn: 'Captcha-required errors mean Discord wants that account to prove it is human; solve it manually in Discord and try again.',
       cp_builder_title: 'Pick components → add as step',
       cp_clear: 'Clear steps', cp_run: 'Run campaign',
       cp_add: 'Add step',
@@ -1484,7 +1484,7 @@ input.invalid{border-color:var(--red) !important;}
       js_run: 'Vào server',
       js_result: '{ok}/{total} tài khoản vào được.',
       js_need_invite: 'Hãy dán link mời.',
-      js_captcha_warn: 'Lỗi captcha nghĩa là Discord bắt tài khoản đó xác minh người thật; mở Discord thường để giải captcha rồi thử lại.'
+      js_captcha_warn: 'Lỗi captcha nghĩa là Discord bắt tài khoản đó xác minh người thật; mở Discord thường để giải captcha rồi thử lại.',
       cp_builder_title: 'Chọn component → thêm thành một bước',
       cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
       cp_add: 'Thêm bước',
