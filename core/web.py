@@ -1432,6 +1432,8 @@ input.invalid{border-color:var(--red) !important;}
       ov_url: 'OAuth URL', ov_run: 'Verify',
       ov_result: '{ok}/{total} accounts verified.',
       ov_need_url: 'Paste the OAuth URL first.',
+      pk_oauth_title: 'OAuth2 link — click to authorize with the picked accounts',
+      pk_oauth_tag: 'OAuth / Verify',
       btn_rename_one: 'Rename this account',
       ph_rename_one: 'New nickname (reset = default)',
       msg_renamed_one: 'Renamed to "{n}".',
@@ -1686,6 +1688,8 @@ input.invalid{border-color:var(--red) !important;}
       ov_url: 'URL OAuth', ov_run: 'Xác minh',
       ov_result: '{ok}/{total} tài khoản authorize xong.',
       ov_need_url: 'Hãy dán URL OAuth trước.',
+      pk_oauth_title: 'Link OAuth2 — bấm để authorize bằng các tài khoản đã tick',
+      pk_oauth_tag: 'OAuth / Verify',
       btn_rename_one: 'Đổi tên tài khoản này',
       ph_rename_one: 'Nickname mới (reset = mặc định)',
       msg_renamed_one: 'Đã đổi tên thành "{n}".',
@@ -2985,10 +2989,22 @@ input.invalid{border-color:var(--red) !important;}
         var kids = row.children.map(function(child, ci){
           var ident = 'm' + mi + '-c' + ci;
           if (child.type === 'button') {
-            var disabled = child.disabled || !!child.url;
             var label = child.label || child.emoji || '[button]';
+            // Nút kiểu Link (có URL) — nếu là OAuth2 Discord thì cho verify hàng loạt
+            if (child.url) {
+              var isOAuth = child.url.indexOf('discord.com/oauth2') >= 0
+                         || child.url.indexOf('discord.com/api/oauth2') >= 0
+                         || child.url.indexOf('discordapp.com/oauth2') >= 0;
+              if (isOAuth) {
+                return '<button class="pk-btn style-5" type="button" data-pk-oauth="' + esc(child.url) + '" title="' + esc(t('pk_oauth_title')) + '">'
+                  + icon('tick') + ' ' + esc(label) + ' — ' + esc(t('pk_oauth_tag')) + '</button>';
+              }
+              return '<a class="pk-btn style-5" href="' + esc(child.url) + '" target="_blank" rel="noopener">'
+                + (child.emoji ? esc(child.emoji) + ' ' : '') + esc(label) + '</a>';
+            }
+            var disabled = child.disabled;
             return '<button class="pk-btn style-' + esc(String(child.style)) + '" type="button" data-pk-click="' + esc(msg.message_id) + '|' + esc(child.custom_id) + '"'
-              + (disabled ? ' disabled title="link / disabled"' : '') + '>'
+              + (disabled ? ' disabled title="disabled"' : '') + '>'
               + (child.emoji ? esc(child.emoji) + ' ' : '') + esc(label) + '</button>';
           }
           var options = (child.options || []).map(function(opt){
@@ -3079,6 +3095,18 @@ input.invalid{border-color:var(--red) !important;}
     if (btn) {
       var parts = btn.getAttribute('data-pk-click').split('|');
       runInteract(parts[0], parts[1], []);
+      return;
+    }
+    var oauth = event.target.closest('[data-pk-oauth]');
+    if (oauth) {
+      var ourl = oauth.getAttribute('data-pk-oauth');
+      var picked = pkPickedIds();
+      if (!picked.length) { toast(t('gx_pick_first'), 'error'); return; }
+      api('/api/oauth2-verify', 'POST', {oauth_url: ourl, bot_ids: picked}).then(function(data){
+        if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
+        toast(t('ov_result').replace('{ok}', data.success).replace('{total}', data.total),
+              data.success === data.total ? 'success' : 'error');
+      });
       return;
     }
     var sel = event.target.closest('[data-pk-choose]');
