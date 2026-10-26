@@ -592,6 +592,11 @@ class BotManager:
         self.state_listeners: list[StateListener] = []
         self.active_mode: str = "idle"  # "idle" / "normal" / "auto_room"
         self.start_timestamp: float = time.time()
+        # Trạng thái chiến dịch (bấm/chọn lặp nhiều vòng)
+        self._campaign_cancel: asyncio.Event = asyncio.Event()
+        self._campaign_running: bool = False
+        self._campaign_info: dict[str, Any] = {}
+        self._campaign_task: asyncio.Task | None = None
 
     # ------------------------------------------------------------------
     # Listeners
@@ -1454,15 +1459,17 @@ class BotManager:
         success = sum(1 for r in results if r.get("ok"))
         return {"success": success, "total": len(bot_ids), "results": list(results)}
 
-    async def run_campaign(
+    async def _run_campaign_once(
         self,
         bot_ids: list[int | str],
         steps: list[dict[str, Any]],
-        wait_between: float = 1.0,
-    ) -> dict[str, Any]:
-        """Chạy nhiều bước nối nhau: trong một bước tất cả tài khoản bay song song."""
+        wait_between: float,
+    ) -> list[dict[str, Any]]:
+        """Một vòng chiến dịch."""
         step_results: list[dict[str, Any]] = []
         for index, step in enumerate(steps):
+            if self._campaign_cancel.is_set():
+                break
             try:
                 channel_id = int(step["channel_id"])
                 message_id = int(step["message_id"])
@@ -1475,9 +1482,73 @@ class BotManager:
                 bot_ids, channel_id, message_id, custom_id, values
             )
             step_results.append({"step": index, **result})
-            if wait_between > 0 and index < len(steps) - 1:
+            if wait_between > 0 and index < len(steps) - 1 and not self._campaign_cancel.is_set():
                 await asyncio.sleep(wait_between)
-        return {"steps": step_results, "total_steps": len(steps)}
+        return step_results
+
+    async def run_campaign(
+        self,
+        bot_ids: list[int | str],
+        steps: list[dict[str, Any]],
+        wait_between: float = 1.0,
+        loops: int = 1,
+        wait_between_loops: float = 2.0,
+    ) -> dict[str, Any]:
+        """Chạy chiến dịch nhiều vòng; ``loops=0`` nghĩa là lặp vô hạn (dừng bằng stop_campaign)."""
+        self._campaign_cancel.clear()
+        self._campaign_running = True
+        self._campaign_info = {
+            "started_at": time.time(),
+            "loops_target": loops,
+            "loops_done": 0,
+            "last_step_results": [],
+        }
+        try:
+            index = 0
+            while True:
+                if self._campaign_cancel.is_set():
+                    break
+                step_results = await self._run_campaign_once(bot_ids, steps, wait_between)
+                index += 1
+                self._campaign_info["loops_done"] = index
+                self._campaign_info["last_step_results"] = step_results
+                app_logger.info(
+                    "Chiến dịch: xong vòng %d (mục tiêu %s)",
+                    index, "∞" if loops == 0 else loops,
+                )
+                if loops and index >= loops:
+                    break
+                if self._campaign_cancel.is_set():
+                    break
+                if wait_between_loops > 0:
+                    # Chia nhỏ để stop phản hồi nhanh hơn
+                    waited = 0.0
+                    while waited < wait_between_loops and not self._campaign_cancel.is_set():
+                        await asyncio.sleep(min(0.5, wait_between_loops - waited))
+                        waited += 0.5
+            return {
+                "loops_done": index,
+                "loops_target": loops,
+                "cancelled": self._campaign_cancel.is_set(),
+                "last_step_results": self._campaign_info["last_step_results"],
+            }
+        finally:
+            self._campaign_running = False
+            self._campaign_cancel.clear()
+
+    def stop_campaign(self) -> bool:
+        """Yêu cầu dừng chiến dịch sớm nhất có thể."""
+        if not self._campaign_running:
+            return False
+        self._campaign_cancel.set()
+        app_logger.info("Chiến dịch: nhận lệnh dừng.")
+        return True
+
+    def campaign_status(self) -> dict[str, Any]:
+        """Trạng thái hiện tại của chiến dịch (đang chạy, số vòng xong...)."""
+        info = dict(self._campaign_info)
+        info["running"] = self._campaign_running
+        return info
 
     @staticmethod
     def _find_component(components: Any, custom_id: str) -> Any:

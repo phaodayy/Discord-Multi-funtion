@@ -387,8 +387,9 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .cp-step .cp-sub{color:var(--text-muted);font-size:11px;margin-left:6px;}
 .cp-step-x{background:transparent;border:none;color:var(--text-faint);cursor:pointer;padding:4px;border-radius:4px;}
 .cp-step-x:hover{color:var(--red);}
-.cp-wait{min-width:0;}
-.cp-wait input{width:110px;font-size:13px;padding:6px 10px;}
+.cp-timing{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 8px;}
+.cp-timing label{min-width:140px;}
+.cp-timing input{width:140px;font-size:13px;padding:6px 10px;}
 .cp-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
 .cp-empty{color:var(--text-muted);font-size:13px;padding:12px;border:1px dashed var(--border);border-radius:8px;text-align:center;}
 .gx-accounts{display:flex;flex-direction:column;gap:4px;}
@@ -818,13 +819,23 @@ input.invalid{border-color:var(--red) !important;}
 
               <div class="panel-head" style="margin-top:16px">
                 <h2 data-i18n="cp_steps_title">Steps</h2>
-                <label class="cp-wait"><span data-i18n="cp_wait">Wait between steps (s)</span>
+                <span class="hint" id="cp-status"></span>
+              </div>
+              <div class="cp-timing">
+                <label><span data-i18n="cp_wait">Wait between steps (s)</span>
                   <input id="cp-wait" type="number" value="1" min="0" step="0.5">
+                </label>
+                <label><span data-i18n="cp_loops">Loops (0 = infinite)</span>
+                  <input id="cp-loops" type="number" value="0" min="0" step="1">
+                </label>
+                <label><span data-i18n="cp_wait_loops">Wait between loops (s)</span>
+                  <input id="cp-wait-loops" type="number" value="2" min="0" step="0.5">
                 </label>
               </div>
               <div id="cp-steps" class="cp-steps"></div>
               <div class="cp-actions">
                 <button id="cp-clear" class="btn" type="button"><span class="ico" data-icon="x"></span><span data-i18n="cp_clear">Clear steps</span></button>
+                <button id="cp-stop" class="btn hidden" type="button"><span class="ico" data-icon="x"></span><span data-i18n="cp_stop">Stop</span></button>
                 <button id="cp-run" class="btn btn-primary" type="button"><span class="ico" data-icon="play"></span><span data-i18n="cp_run">Run campaign</span></button>
               </div>
             </div>
@@ -1231,6 +1242,12 @@ input.invalid{border-color:var(--red) !important;}
       cp_load: 'Load',
       cp_steps_title: 'Steps',
       cp_wait: 'Wait between steps (s)',
+      cp_loops: 'Loops (0 = infinite)',
+      cp_wait_loops: 'Wait between loops (s)',
+      cp_stop: 'Stop',
+      cp_status_running: 'Running — loop {n} done',
+      cp_status_idle: 'Idle',
+      cp_already_running: 'A campaign is already running.',
       cp_builder_title: 'Pick components → add as step',
       cp_clear: 'Clear steps', cp_run: 'Run campaign',
       cp_add: 'Add step',
@@ -1429,6 +1446,12 @@ input.invalid{border-color:var(--red) !important;}
       cp_load: 'Mở',
       cp_steps_title: 'Các bước',
       cp_wait: 'Giãn cách giữa các bước (s)',
+      cp_loops: 'Số vòng lặp (0 = vô hạn)',
+      cp_wait_loops: 'Giãn cách giữa các vòng (s)',
+      cp_stop: 'Dừng',
+      cp_status_running: 'Đang chạy — xong vòng {n}',
+      cp_status_idle: 'Đang nghỉ',
+      cp_already_running: 'Đang có một chiến dịch chạy.',
       cp_builder_title: 'Chọn component → thêm thành một bước',
       cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
       cp_add: 'Thêm bước',
@@ -2762,9 +2785,12 @@ input.invalid{border-color:var(--red) !important;}
   var cpAccountsEl = $('cp-accounts'), cpSelectAll = $('cp-select-all'), cpSelectNone = $('cp-select-none');
   var cpFilter = $('cp-filter'), cpChannelsEl = $('cp-channels'), cpMessagesEl = $('cp-messages');
   var cpStepsEl = $('cp-steps'), cpWait = $('cp-wait'), cpClear = $('cp-clear'), cpRun = $('cp-run');
+  var cpStop = $('cp-stop'), cpStatus = $('cp-status');
+  var cpLoops = $('cp-loops'), cpWaitLoops = $('cp-wait-loops');
   var cpName = $('cp-name'), cpLoad = $('cp-load'), cpSave = $('cp-save'), cpDelete = $('cp-delete');
   var cpGuilds = [], cpGuildSig = null, cpPicked = {}, cpList = [], cpListKey = '';
   var cpChannelId = '', cpMessages = [], cpMsgKey = '', cpSteps = [], cpBusy = false;
+  var cpStatusTimer = null;
 
   function cpGuildData(){
     return cpGuilds.filter(function(g){ return g.id === cpGuild.value; })[0] || null;
@@ -2787,6 +2813,7 @@ input.invalid{border-color:var(--red) !important;}
       loadCpGuilds();
       renderCpSavedList();
       renderCpSteps();
+      pollCampaignStatus();
     }
   }
   function loadCpGuilds(){
@@ -2969,22 +2996,46 @@ input.invalid{border-color:var(--red) !important;}
     if (!picked.length) { toast(t('gx_pick_first'), 'error'); return; }
     if (!cpSteps.length) { toast(t('cp_need_steps'), 'error'); return; }
     if (cpBusy) { return; }
-    cpBusy = true;
-    cpRun.disabled = true;
     var body = {
       bot_ids: picked,
       wait_between: Math.max(0, parseFloat(cpWait.value) || 0),
+      loops: Math.max(0, parseInt(cpLoops.value, 10) || 0),
+      wait_between_loops: Math.max(0, parseFloat(cpWaitLoops.value) || 0),
       steps: cpSteps.map(function(s){
         return {channel_id: s.channel_id, message_id: s.message_id, custom_id: s.custom_id, values: s.values || []};
       })
     };
     toast(t('cp_running').replace('{n}', cpSteps.length), 'success');
     api('/api/components/campaign', 'POST', body).then(function(data){
-      cpBusy = false;
-      cpRun.disabled = false;
-      if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
-      toast(t('cp_done'), 'success');
+      if (!data || !data.success) {
+        toast(t(data && data.detail === 'Đang có một chiến dịch chạy; hãy dừng trước' ? 'cp_already_running' : 'err_request_failed'), 'error');
+        return;
+      }
+      startCampaignPolling();
     });
+  }
+  function stopCampaign(){
+    api('/api/components/campaign/stop', 'POST', {}).then(function(){
+      pollCampaignStatus();
+    });
+  }
+  function pollCampaignStatus(){
+    api('/api/components/campaign/status', 'GET').then(function(data){
+      cpBusy = !!(data && data.running);
+      cpRun.classList.toggle('hidden', cpBusy);
+      cpStop.classList.toggle('hidden', !cpBusy);
+      if (cpBusy) {
+        cpStatus.textContent = t('cp_status_running').replace('{n}', (data && data.loops_done) || 0);
+      } else {
+        cpStatus.textContent = '';
+        if (cpStatusTimer) { clearInterval(cpStatusTimer); cpStatusTimer = null; }
+      }
+    });
+  }
+  function startCampaignPolling(){
+    if (cpStatusTimer) { clearInterval(cpStatusTimer); }
+    pollCampaignStatus();
+    cpStatusTimer = setInterval(pollCampaignStatus, 1500);
   }
   cpGuild.addEventListener('change', function(){
     localStorage.setItem(CP_GUILD_KEY, cpGuild.value);
@@ -3063,6 +3114,7 @@ input.invalid{border-color:var(--red) !important;}
   });
   cpClear.addEventListener('click', function(){ cpSteps = []; renderCpSteps(); });
   cpRun.addEventListener('click', runCampaign);
+  cpStop.addEventListener('click', stopCampaign);
   cpSave.addEventListener('click', function(){
     var name = cpName.value.trim();
     if (!name) { toast(t('cp_need_name'), 'error'); return; }

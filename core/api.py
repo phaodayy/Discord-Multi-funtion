@@ -111,11 +111,13 @@ class CampaignStep(BaseModel):
 
 
 class CampaignBody(BaseModel):
-    """Body chạy chiến dịch gồm nhiều bước nối nhau."""
+    """Body chạy chiến dịch gồm nhiều bước nối nhau; có thể lặp nhiều vòng."""
 
     bot_ids: list[str]
     steps: list[CampaignStep]
     wait_between: float = 1.0
+    loops: int = 1  # 0 = lặp vô hạn, dừng bằng /campaign/stop
+    wait_between_loops: float = 2.0
 
 
 # -----------------------------------------------------------------------------
@@ -350,14 +352,37 @@ async def interact_component(body: ComponentInteractBody) -> dict[str, Any]:
 
 @router.post("/components/campaign")
 async def run_campaign(body: CampaignBody) -> dict[str, Any]:
-    """Chạy một chiến dịch gồm nhiều bước bấm/chọn, các bước nối nhau."""
+    """Chạy chiến dịch (nhiều bước, nhiều vòng); chạy nền và trả ngay."""
     if not body.bot_ids:
         raise HTTPException(status_code=400, detail="Cần chọn ít nhất một tài khoản")
     if not body.steps:
         raise HTTPException(status_code=400, detail="Chiến dịch chưa có bước nào")
+    if bot_manager._campaign_running:
+        raise HTTPException(status_code=409, detail="Đang có một chiến dịch chạy; hãy dừng trước")
     steps = [step.model_dump() for step in body.steps]
-    result = await bot_manager.run_campaign(body.bot_ids, steps, max(0.0, body.wait_between))
-    return {"success": True, **result}
+    bot_manager._campaign_task = asyncio.create_task(
+        bot_manager.run_campaign(
+            body.bot_ids,
+            steps,
+            max(0.0, body.wait_between),
+            max(0, int(body.loops)),
+            max(0.0, body.wait_between_loops),
+        )
+    )
+    return {"success": True, "started": True, "loops": body.loops}
+
+
+@router.post("/components/campaign/stop")
+async def stop_campaign() -> dict[str, Any]:
+    """Dừng chiến dịch đang chạy."""
+    stopped = bot_manager.stop_campaign()
+    return {"success": True, "stopped": stopped}
+
+
+@router.get("/components/campaign/status")
+async def campaign_status() -> dict[str, Any]:
+    """Trạng thái chiến dịch: đang chạy, số vòng đã xong."""
+    return bot_manager.campaign_status()
 
 
 @router.get("/tokens")
