@@ -60,9 +60,27 @@ async def shutdown() -> None:
     sys.stdout.flush()
 
 
+async def _autostart_bots() -> None:
+    """Tự đăng nhập tài khoản từ tokens.txt nếu có — để sau khi deploy không cần bấm START lại."""
+    try:
+        bot_manager.load_tokens()
+    except Exception as exc:
+        app_logger.warning("Autostart: không nạp được tokens: %s", exc)
+        return
+    if not bot_manager.tokens:
+        app_logger.info("Autostart: không có token nào, bỏ qua.")
+        return
+    app_logger.info("Autostart: đăng nhập %d token (chế độ normal, không vào kênh).", len(bot_manager.tokens))
+    asyncio.create_task(bot_manager.start_normal([], 0.0))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Cleanup khi uvicorn shutdown (Ctrl+C hoặc SIGTERM)."""
+    # Tự khởi động bot khi dashboard lên — giúp sau mỗi lần deploy/restart
+    # không phải quay lại dashboard bấm START để các tài khoản online trở lại.
+    if os.getenv("AUTOSTART_BOTS", "1") != "0":
+        await _autostart_bots()
     yield
     await shutdown()
 
