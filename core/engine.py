@@ -246,7 +246,9 @@ class Bot(discord.Client):
         app_logger.info(
             "Đã đăng nhập: %s (%s...)", self.user, self.token_str[:6]
         )
-        await self.join_vc()
+        # Chưa gán kênh (chỉ đăng nhập để chọn kênh sau) thì không join
+        if self.target_channel_id:
+            await self.join_vc()
         self.notify_state_change()
 
     async def on_message(self, message: discord.Message) -> None:
@@ -686,13 +688,12 @@ class BotManager:
     async def start_normal(
         self, channel_ids: list[int] | None = None, delay: float = 5.0
     ) -> None:
-        """Chế độ thường: chia đều bot vào các voice channel (round-robin)."""
-        if channel_ids:
-            self.channel_ids = list(channel_ids)
+        """Chế độ thường: chia đều bot vào các voice channel (round-robin).
 
-        if not self.channel_ids:
-            app_logger.error("Chưa cấu hình voice channel nào để khởi động.")
-            return
+        Không có channel nào thì chỉ đăng nhập; chọn kênh sau bằng ``move_bots``.
+        """
+        self.channel_ids = list(channel_ids or [])
+
         if not self.tokens:
             app_logger.error("Chưa có token nào; hãy gọi load_tokens() trước.")
             return
@@ -705,9 +706,9 @@ class BotManager:
             if len(token) < 5:
                 continue
 
-            assigned_channel = self.channel_ids[i % num_channels]
+            assigned_channel = self.channel_ids[i % num_channels] if num_channels else 0
             bot = self._create_bot(token, assigned_channel)
-            app_logger.info("Bot %d → Channel %s", i + 1, assigned_channel)
+            app_logger.info("Bot %d → Channel %s", i + 1, assigned_channel or "(chưa chọn)")
 
             asyncio.create_task(self.safe_start_bot(bot, token))
 

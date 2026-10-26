@@ -135,7 +135,8 @@ async def get_status() -> dict[str, Any]:
 async def start(body: StartBody) -> dict[str, Any]:
     """Khởi động bot ở chế độ normal hoặc auto_room (chạy nền)."""
     channel_ids = [_parse_int(cid, "channel_id") for cid in body.channel_ids]
-    if not channel_ids:
+    # Normal mode cho phép không có kênh: chỉ đăng nhập, chọn kênh sau trên dashboard
+    if not channel_ids and body.mode != "normal":
         raise HTTPException(status_code=400, detail="Cần ít nhất một channel ID")
 
     # START lại khi đang chạy: dừng bot cũ để không đăng nhập trùng một token

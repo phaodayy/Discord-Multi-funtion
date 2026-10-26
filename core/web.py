@@ -323,42 +323,32 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .onboard-body{flex:1;min-width:0;}
 .onboard-body p{margin:4px 0 0;}
 
-/* ---------- Status card ---------- */
-.status-main{display:flex;align-items:center;gap:14px;}
-.status-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--bg);border:1px solid var(--border);color:var(--text-faint);flex:0 0 auto;}
-.status-ico .ico{width:22px;height:22px;}
-.status-card.in-voice .status-ico{color:var(--green);border-color:var(--green);background:rgba(35,165,90,.12);}
-.status-card.connecting .status-ico{color:var(--yellow);border-color:var(--yellow);background:rgba(240,178,50,.12);}
-.status-text{flex:1;min-width:0;}
-.status-title{font-size:17px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.status-sub{color:var(--text-muted);font-size:13px;}
-.status-errors{display:flex;align-items:center;gap:8px;margin-top:12px;padding:8px 10px;border-radius:8px;background:rgba(242,63,67,.08);border:1px solid rgba(242,63,67,.35);color:var(--red);font-size:12.5px;}
-.status-errors #status-errors-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.link-btn{background:none;border:none;color:var(--accent);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:0;white-space:nowrap;}
-.link-btn:hover{text-decoration:underline;}
-.switch-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
-.switch{display:inline-flex;align-items:center;gap:8px;padding:7px 12px 7px 8px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
-.switch:hover{border-color:var(--border-strong);color:var(--text);}
-.switch .ico{width:15px;height:15px;}
-.switch-knob{position:relative;width:30px;height:18px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border-strong);flex:0 0 auto;transition:background .15s;}
-.switch-knob::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--text-faint);transition:transform .15s,background .15s;}
-.switch.on{color:var(--text);border-color:var(--accent);}
-.switch.on .switch-knob{background:var(--accent);border-color:var(--accent);}
-.switch.on .switch-knob::after{transform:translateX(12px);background:#fff;}
-.switch.mixed .switch-knob::after{transform:translateX(6px);background:var(--yellow);}
-
-/* ---------- Voice layout + server explorer ---------- */
-.voice-layout{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start;}
-.voice-main{display:flex;flex-direction:column;gap:16px;min-width:0;}
-.voice-side{position:sticky;top:16px;min-width:0;}
-.explorer{display:flex;flex-direction:column;max-height:calc(100vh - 32px);}
-.explorer .panel-head{margin-bottom:10px;}
+/* ---------- Voice panel ---------- */
+.start-card{border-color:var(--accent);}
+.start-card .onboard-ico{color:var(--accent);}
+.vp-top{display:flex;align-items:flex-end;gap:10px;}
+.vp-server{flex:1;max-width:420px;}
 #gx-guild{width:100%;font-size:14px;padding:10px 12px;}
-.gx-body{overflow-y:auto;min-height:0;display:flex;flex-direction:column;}
-.gx-step{display:flex;align-items:center;gap:8px;margin:14px 0 8px;color:var(--text-muted);font-size:12px;font-weight:700;}
-.explorer .gx-step:first-of-type{margin-top:0;}
-.gx-step .link-btn{margin-left:auto;font-size:12px;}
-.gx-num{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--accent-soft);color:var(--accent);font-size:11px;}
+.vp-cols{display:grid;grid-template-columns:minmax(260px,2fr) minmax(0,3fr);gap:20px;margin-top:16px;align-items:start;}
+.vp-accounts,.vp-channels{min-width:0;}
+.vp-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.vp-toolbar .hint{margin:0;}
+.vp-tools{display:flex;align-items:center;gap:4px;}
+.tool{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
+.tool:hover:not(:disabled){border-color:var(--border-strong);color:var(--text);}
+.tool:disabled{opacity:.4;cursor:not-allowed;}
+.tool.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+.tool.mixed{border-color:var(--yellow);color:var(--yellow);}
+.tool .ico{width:15px;height:15px;}
+.vp-tools .btn{margin-left:6px;}
+.vp-link{margin-top:12px;}
+.vp-link input{font-size:13px;padding:9px 11px;}
+.gx-acc-sub.err{color:var(--red);}
+.gx-account .member-icons{display:flex;gap:3px;color:var(--text-faint);}
+.gx-account .member-icons .ico{width:13px;height:13px;}
+@media (max-width:900px){
+  .vp-cols{grid-template-columns:1fr;}
+}
 .gx-accounts{display:flex;flex-direction:column;gap:4px;}
 .gx-account{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;}
 .gx-account:hover{border-color:var(--border-strong);}
@@ -373,7 +363,7 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .gx-acc-sub.in{color:var(--green);}
 .gx-acc-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;}
 .gx-acc-actions .hint{margin:0;}
-.gx-channels{overflow-y:visible;display:flex;flex-direction:column;gap:8px;padding-right:2px;}
+.gx-channels{display:flex;flex-direction:column;gap:8px;}
 .gx-channel{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);}
 .gx-channel.here{border-color:rgba(35,165,90,.55);background:rgba(35,165,90,.07);}
 .gx-head{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 10px;}
@@ -390,69 +380,10 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .gx-member.own .gx-member-name{color:var(--accent);font-weight:600;}
 .gx-tag{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 6px;margin-left:4px;}
 .gx-member .member-icons .ico{width:13px;height:13px;}
-@media (max-width:1100px){
-  .voice-layout{grid-template-columns:1fr;}
-  .voice-side{position:static;}
-  .explorer{max-height:none;}
-}
-
 /* ---------- Join ---------- */
 .join-row{display:flex;gap:10px;}
 .join-row input{flex:1;min-width:0;font-size:14px;padding:11px 12px;}
 .join-row .btn{min-width:96px;}
-
-/* ---------- Account rows ---------- */
-.bot-rows{display:flex;flex-direction:column;gap:8px;}
-.bot-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius);background:var(--surface-2);border:1px solid var(--border);}
-.bot-row.has-error{border-color:rgba(242,63,67,.45);}
-.bot-row .avatar{width:36px;height:36px;}
-.bot-row-info{flex:1;min-width:0;}
-.bot-row-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.bot-row-sub{font-size:12px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.bot-row-sub.err{color:var(--red);}
-.bot-row-sub .dot-s{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;background:var(--gray);}
-.bot-row-sub .dot-s.voice{background:var(--green);}
-.bot-row-sub .dot-s.ready{background:var(--yellow);}
-.bot-row-sub .dot-s.error{background:var(--red);}
-.bot-row-actions{display:flex;gap:4px;flex:0 0 auto;}
-.bot-row .toggle-btn{flex:0 0 auto;width:34px;min-height:34px;padding:0;}
-.bot-row .toggle-btn span:not(.ico){display:none;}
-.bot-row .sep{width:1px;background:var(--border);margin:4px 4px;}
-#bot-empty{padding:6px 2px;}
-
-/* ---------- Modal wide ---------- */
-.modal.modal-wide{max-width:640px;}
-.modal .member-list{max-height:50vh;overflow-y:auto;}
-.qj-detail-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
-.qj-detail-head > .ico{width:20px;height:20px;color:var(--accent);}
-
-/* ---------- Bot cards ---------- */
-.bots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
-.bot-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s;}
-.bot-card:hover{border-color:var(--border-strong);}
-.bot-top{display:flex;align-items:center;gap:10px;}
-.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;}
-.avatar-fallback{display:inline-flex;align-items:center;justify-content:center;background:var(--surface-3);color:var(--text-muted);border:1px solid var(--border);}
-.avatar-fallback .ico{width:18px;height:18px;}
-.bot-id{min-width:0;flex:1;}
-.bot-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bot-token{color:var(--text-faint);font-size:11px;font-family:var(--mono);}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.4px;border:1px solid;white-space:nowrap;}
-.badge .dot{flex:0 0 auto;}
-.badge-voice{color:var(--green);border-color:var(--green);background:rgba(35,165,90,.12);}
-.badge-ready{color:var(--yellow);border-color:var(--yellow);background:rgba(240,178,50,.12);}
-.badge-error{color:var(--red);border-color:var(--red);background:rgba(242,63,67,.12);}
-.badge-connecting{color:var(--gray);border-color:var(--gray);background:rgba(128,132,142,.12);}
-.bot-details{display:flex;flex-wrap:wrap;gap:10px;color:var(--text-muted);font-size:12px;}
-.bot-details span{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums;}
-.bot-details .ico{width:13px;height:13px;}
-.bot-error{color:var(--red);font-size:11.5px;background:rgba(242,63,67,.08);border:1px solid rgba(242,63,67,.35);border-radius:8px;padding:6px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.bot-controls{display:flex;gap:8px;margin-top:auto;}
-.toggle-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1;min-height:36px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
-.toggle-btn:hover{border-color:var(--accent);color:var(--text);}
-.toggle-btn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
-.empty{color:var(--text-muted);text-align:center;padding:26px 12px;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:8px;}
-.empty .ico{width:26px;height:26px;color:var(--text-faint);}
 
 /* ---------- Controls ---------- */
 .control-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:10px;}
@@ -551,16 +482,6 @@ input.invalid{border-color:var(--red) !important;}
   </div>
 </div>
 
-<div id="move-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="move-title">
-  <div class="modal">
-    <h3 id="move-title" data-i18n="move_title">Move to voice channel</h3>
-    <div id="move-channels" class="channel-list"></div>
-    <div class="modal-actions">
-      <button id="move-cancel" class="btn" type="button" data-i18n="btn_cancel">Cancel</button>
-    </div>
-  </div>
-</div>
-
 <div id="login-screen" class="login-screen">
   <div class="login-card">
     <div class="lang-switch">
@@ -624,6 +545,7 @@ input.invalid{border-color:var(--red) !important;}
       <header class="header">
         <h1 class="view-title" id="view-title">Voice</h1>
         <span class="pill"><span class="run-dot" id="run-dot"></span><b id="stat-mode">—</b><span id="uptime-wrap" class="hidden"> · <b id="stat-uptime">00:00:00</b></span></span>
+        <span class="pill hidden" id="voice-pill"><span class="ico" data-icon="volume"></span><b id="voice-pill-text"></b></span>
         <div class="header-right">
           <span class="tunnel hidden" id="tunnel-wrap">
             <span class="ico" data-icon="globe" title="Tunnel"></span>
@@ -632,13 +554,14 @@ input.invalid{border-color:var(--red) !important;}
               <span class="ico" data-icon="copy"></span>
             </button>
           </span>
+          <button id="stop-btn" class="btn btn-danger btn-sm hidden" type="button">
+            <span class="ico" data-icon="stop"></span><span data-i18n="btn_stop_all">Stop all</span>
+          </button>
         </div>
       </header>
 
-      <!-- ===== Voice (trang chính) ===== -->
+      <!-- ===== Voice (trang chính): chọn server → tài khoản → kênh ===== -->
       <section class="view" data-view="voice">
-       <div class="voice-layout">
-        <div class="voice-main">
 
         <section class="panel onboard hidden" id="onboard">
           <span class="ico onboard-ico" data-icon="key"></span>
@@ -649,83 +572,56 @@ input.invalid{border-color:var(--red) !important;}
           <button class="btn btn-primary" type="button" data-goto="tokens" data-i18n="btn_go_tokens">Add tokens</button>
         </section>
 
-        <section class="panel status-card" id="status-card">
-          <div class="status-main">
-            <span class="status-ico" id="status-ico"><span class="ico" data-icon="volume"></span></span>
-            <div class="status-text">
-              <div class="status-title" id="status-title">—</div>
-              <div class="status-sub" id="status-sub"></div>
-            </div>
-            <button id="stop-btn" class="btn btn-danger hidden" type="button">
-              <span class="ico" data-icon="logout"></span><span data-i18n="btn_leave">Leave channel</span>
+        <section class="panel onboard start-card hidden" id="start-card">
+          <span class="ico onboard-ico" data-icon="volume"></span>
+          <div class="onboard-body">
+            <h2 data-i18n="start_title">Accounts are offline</h2>
+            <p class="muted" data-i18n="start_desc">Log the accounts in first. Then pick a server, the accounts and a channel.</p>
+          </div>
+          <button id="start-all-btn" class="btn btn-primary" type="button">
+            <span class="ico" data-icon="play"></span><span data-i18n="btn_start_all">Log in all accounts</span>
+          </button>
+        </section>
+
+        <section class="panel voice-panel hidden" id="voice-panel">
+          <div class="vp-top">
+            <label class="vp-server"><span data-i18n="gx_step_server">Server</span>
+              <select id="gx-guild"></select>
+            </label>
+            <button id="qj-refresh" class="icon-btn" type="button" data-i18n-title="btn_refresh" aria-label="Refresh">
+              <span class="ico" data-icon="refresh"></span>
             </button>
           </div>
-          <div class="status-errors hidden" id="status-errors">
-            <span class="ico" data-icon="alert"></span>
-            <span id="status-errors-text"></span>
-            <button class="link-btn" type="button" data-goto="advanced" data-i18n="btn_view_log">View log</button>
-          </div>
-          <div class="switch-row hidden" id="switch-row">
-            <button class="switch" type="button" data-all-field="mute"><span class="switch-knob"></span><span class="ico" data-icon="micOff"></span><span data-i18n="all_mute">Mute</span></button>
-            <button class="switch" type="button" data-all-field="deaf"><span class="switch-knob"></span><span class="ico" data-icon="deafOff"></span><span data-i18n="all_deaf">Deafen</span></button>
-            <button class="switch" type="button" data-all-field="video"><span class="switch-knob"></span><span class="ico" data-icon="cam"></span><span data-i18n="all_video">Camera</span></button>
-            <button class="switch" type="button" data-all-field="stream"><span class="switch-knob"></span><span class="ico" data-icon="screen"></span><span data-i18n="all_stream">Stream</span></button>
-          </div>
-        </section>
-
-        <section class="panel" id="join-panel">
-          <div class="panel-head">
-            <h2 data-i18n="join_title">Join a channel</h2>
-          </div>
-          <div class="join-row">
-            <input id="qj-input" type="text" autocomplete="off" data-i18n-ph="ph_quick_link" placeholder="Paste a channel link or ID" aria-label="Channel link">
-            <button id="qj-join" class="btn btn-primary" type="button">
-              <span class="ico" data-icon="play"></span><span data-i18n="btn_enter">Join</span>
-            </button>
-          </div>
-          <div id="qj-recent-wrap" class="hidden">
-            <div class="sub-label" data-i18n="recent_title">Recent</div>
-            <div id="qj-recent" class="chip-row"></div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <h2 data-i18n="accounts_title">Accounts</h2>
-            <span class="count" id="bots-count">0</span>
-          </div>
-          <div id="bots-grid" class="bot-rows"></div>
-          <div id="bot-empty" class="muted" data-i18n="accounts_empty">No account is running. Pick a channel above to start.</div>
-        </section>
-        </div>
-
-        <aside class="voice-side">
-          <section class="panel explorer" id="explorer">
-            <div class="panel-head">
-              <h2 data-i18n="gx_title">Servers</h2>
-              <button id="qj-refresh" class="icon-btn" type="button" data-i18n-title="btn_refresh" aria-label="Refresh">
-                <span class="ico" data-icon="refresh"></span>
-              </button>
-            </div>
-            <div class="gx-step"><span class="gx-num">1</span><span data-i18n="gx_step_server">Choose a server</span></div>
-            <select id="gx-guild" aria-label="Server"></select>
-            <div class="gx-body">
-              <div class="gx-step"><span class="gx-num">2</span><span data-i18n="gx_step_accounts">Choose accounts</span>
+          <div class="vp-cols">
+            <div class="vp-accounts">
+              <div class="panel-head">
+                <h2 data-i18n="accounts_title">Accounts</h2>
                 <button class="link-btn" id="gx-select-all" type="button" data-i18n="gx_select_all">Select all</button>
               </div>
               <div id="gx-accounts" class="gx-accounts"></div>
-              <div class="gx-acc-actions">
+              <div class="vp-toolbar">
                 <span class="hint" id="gx-selected-hint"></span>
-                <button id="gx-chat" class="btn btn-sm" type="button" disabled>
-                  <span class="ico" data-icon="message"></span><span data-i18n="btn_chat">Chat</span>
-                </button>
+                <div class="vp-tools">
+                  <button class="tool" type="button" data-sel-field="mute" data-i18n-title="all_mute" aria-label="Mute"><span class="ico" data-icon="micOff"></span></button>
+                  <button class="tool" type="button" data-sel-field="deaf" data-i18n-title="all_deaf" aria-label="Deafen"><span class="ico" data-icon="deafOff"></span></button>
+                  <button class="tool" type="button" data-sel-field="video" data-i18n-title="all_video" aria-label="Camera"><span class="ico" data-icon="cam"></span></button>
+                  <button class="tool" type="button" data-sel-field="stream" data-i18n-title="all_stream" aria-label="Stream"><span class="ico" data-icon="screen"></span></button>
+                  <button id="gx-chat" class="btn btn-sm" type="button" disabled>
+                    <span class="ico" data-icon="message"></span><span data-i18n="btn_chat">Chat</span>
+                  </button>
+                </div>
               </div>
-              <div class="gx-step"><span class="gx-num">3</span><span data-i18n="gx_step_channel">Pick a voice channel to join</span></div>
-              <div id="qj-channels" class="gx-channels"></div>
             </div>
-          </section>
-        </aside>
-       </div>
+            <div class="vp-channels">
+              <div class="panel-head"><h2 data-i18n="vp_channels_title">Voice channels</h2></div>
+              <div id="qj-channels" class="gx-channels"></div>
+              <div class="join-row vp-link">
+                <input id="qj-input" type="text" autocomplete="off" data-i18n-ph="ph_quick_link" placeholder="Paste a channel link or ID" aria-label="Channel link">
+                <button id="qj-join" class="btn" type="button"><span data-i18n="btn_enter">Join</span></button>
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
 
       <!-- ===== Messages ===== -->
@@ -895,27 +791,6 @@ input.invalid{border-color:var(--red) !important;}
     </div>
   </div>
 
-  <!-- Hộp xem kênh voice: ai đang ở trong + nút vào kênh -->
-  <div id="qj-detail" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="qj-detail-name">
-    <div class="modal modal-wide">
-      <div class="qj-detail-head">
-        <span class="ico" data-icon="volume"></span>
-        <div class="qj-detail-title">
-          <div id="qj-detail-name" class="name"></div>
-          <div id="qj-detail-sub" class="sub"></div>
-        </div>
-        <button id="qj-detail-close" class="icon-btn" type="button" data-i18n-title="title_close" aria-label="Close">
-          <span class="ico" data-icon="x"></span>
-        </button>
-      </div>
-      <div id="qj-members" class="member-list"></div>
-      <div class="modal-actions" style="margin-top:16px">
-        <button id="qj-detail-join" class="btn btn-primary" type="button">
-          <span class="ico" data-icon="play"></span><span id="qj-detail-join-label" data-i18n="qj_join_this">Join this channel</span>
-        </button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -1128,7 +1003,10 @@ input.invalid{border-color:var(--red) !important;}
       rename_title: 'Rename all accounts',
       gx_title: 'Servers', gx_offline: 'Accounts are not online yet', gx_token_tag: 'Token',
       gx_no_voice: 'This server has no voice channel.', gx_here_btn: 'Here',
-      gx_step_server: 'Choose a server', gx_step_accounts: 'Choose accounts', gx_step_channel: 'Pick a voice channel to join',
+      start_title: 'Accounts are offline', start_desc: 'Log the accounts in first. Then pick a server, the accounts and a channel.',
+      btn_start_all: 'Log in all accounts', btn_stop_all: 'Stop all', vp_channels_title: 'Voice channels',
+      voice_pill: '{n}/{t} in voice', msg_starting: 'Logging accounts in...',
+      gx_step_server: 'Server', gx_step_accounts: 'Choose accounts', gx_step_channel: 'Pick a voice channel to join',
       gx_select_all: 'Select all', gx_select_none: 'Clear', gx_no_accounts: 'None of your online accounts is in this server.',
       gx_not_in_voice: 'Not in voice', gx_selected: '{n}/{t} selected', gx_chat_one: 'Select exactly one account to chat',
       gx_pick_first: 'Select at least one account first.',
@@ -1280,7 +1158,10 @@ input.invalid{border-color:var(--red) !important;}
       rename_title: 'Đổi tên tất cả tài khoản',
       gx_title: 'Server', gx_offline: 'Tài khoản chưa online', gx_token_tag: 'Token',
       gx_no_voice: 'Server này không có kênh voice.', gx_here_btn: 'Đang ở đây',
-      gx_step_server: 'Chọn server', gx_step_accounts: 'Chọn tài khoản', gx_step_channel: 'Chọn kênh voice để vào',
+      start_title: 'Tài khoản chưa đăng nhập', start_desc: 'Đăng nhập tài khoản trước. Sau đó chọn server, chọn tài khoản rồi chọn kênh.',
+      btn_start_all: 'Đăng nhập tất cả', btn_stop_all: 'Dừng tất cả', vp_channels_title: 'Kênh voice',
+      voice_pill: '{n}/{t} trong voice', msg_starting: 'Đang đăng nhập các tài khoản...',
+      gx_step_server: 'Server', gx_step_accounts: 'Chọn tài khoản', gx_step_channel: 'Chọn kênh voice để vào',
       gx_select_all: 'Chọn tất cả', gx_select_none: 'Bỏ chọn', gx_no_accounts: 'Không có tài khoản online nào ở trong server này.',
       gx_not_in_voice: 'Chưa vào voice', gx_selected: 'Đã chọn {n}/{t}', gx_chat_one: 'Chọn đúng 1 tài khoản để nhắn tin',
       gx_pick_first: 'Hãy chọn ít nhất một tài khoản.',
@@ -1311,14 +1192,11 @@ input.invalid{border-color:var(--red) !important;}
   var passwordToggle = $('password-toggle');
   var statMode = $('stat-mode'), statUptime = $('stat-uptime'), uptimeWrap = $('uptime-wrap');
   var tunnelWrap = $('tunnel-wrap'), tunnelLabel = $('tunnel-url'), copyBtn = $('copy-tunnel'), logoutBtn = $('logout-btn');
-  var onboard = $('onboard'), joinPanel = $('join-panel'), statusCard = $('status-card');
-  var statusTitle = $('status-title'), statusSub = $('status-sub'), switchRow = $('switch-row');
-  var statusErrors = $('status-errors'), statusErrorsText = $('status-errors-text');
+  var onboard = $('onboard'), voicePill = $('voice-pill'), voicePillText = $('voice-pill-text');
   var modeSelect = $('mode-select'), channelIdsInput = $('channel-ids'), delayInput = $('delay-input');
   var leaderWrap = $('leader-wrap'), leaderCountInput = $('leader-count');
   var startBtn = $('start-btn'), stopBtn = $('stop-btn');
   var renameInput = $('rename-input'), renameAllBtn = $('rename-all-btn');
-  var botsGrid = $('bots-grid'), botsCount = $('bots-count'), botEmpty = $('bot-empty');
   var logConsole = $('log-console'), clearLogsBtn = $('clear-logs');
   var tokenTextarea = $('token-textarea'), tokenLines = $('token-lines');
   var saveTokensBtn = $('save-tokens'), tokenCount = $('token-count'), navTokenCount = $('nav-token-count');
@@ -1326,7 +1204,6 @@ input.invalid{border-color:var(--red) !important;}
   var toastContainer = $('toast-container');
   var confirmModal = $('confirm-modal'), confirmTitle = $('confirm-title'), confirmMessage = $('confirm-message');
   var confirmOk = $('confirm-ok'), confirmCancel = $('confirm-cancel');
-  var moveModal = $('move-modal'), moveChannels = $('move-channels'), moveCancel = $('move-cancel');
   var chatAllChannel = $('chatall-channel'), chatAllMessage = $('chatall-message');
   var chatAllDelay = $('chatall-delay'), chatAllSend = $('chatall-send');
   var reactionChannel = $('reaction-channel'), reactionMessage = $('reaction-message');
@@ -1343,7 +1220,6 @@ input.invalid{border-color:var(--red) !important;}
   var ws = null, wsRetryTimer = null, authFailed = false;
   var baseUptime = 0, baseUptimeStamp = Date.now();
   var lastSummary = null, lastTokenCount = 0, loginErrorKey = '';
-  var moveBotId = '';
 
   /* ---------- Toast ---------- */
   function toast(message, type){
@@ -1385,8 +1261,6 @@ input.invalid{border-color:var(--red) !important;}
   document.addEventListener('keydown', function(event){
     if (event.key !== 'Escape') { return; }
     closeConfirm(false);
-    closeModal(moveModal);
-    closeVoiceDetail();
     toggleEmojiPicker(false);
   });
 
@@ -1400,10 +1274,7 @@ input.invalid{border-color:var(--red) !important;}
     tokenCount.textContent = t('token_count').replace('{n}', lastTokenCount);
     navTokenCount.textContent = lastTokenCount;
     navTokenCount.classList.toggle('empty-badge', lastTokenCount === 0);
-    // Chưa có token: chỉ hiện thẻ hướng dẫn, ẩn phần vào kênh
-    onboard.classList.toggle('hidden', lastTokenCount > 0);
-    joinPanel.classList.toggle('hidden', lastTokenCount === 0);
-    statusCard.classList.toggle('hidden', lastTokenCount === 0);
+    renderVoicePage();
   }
 
   /* ---------- Navigation ---------- */
@@ -1421,7 +1292,7 @@ input.invalid{border-color:var(--red) !important;}
     });
     viewTitle.textContent = t('nav_' + name);
     if (name === 'tokens' && token) { loadTokens(); }
-    if (name === 'voice' && token) { loadChannels(); }
+    if (name === 'voice' && token) { renderVoicePage(); }
     if (name === 'advanced') { logConsole.scrollTop = logConsole.scrollHeight; }
     window.scrollTo(0, 0);
   }
@@ -1459,7 +1330,7 @@ input.invalid{border-color:var(--red) !important;}
     updateTokenLines();
     viewTitle.textContent = t('nav_' + currentView);
     if (lastSummary) { renderSummary(lastSummary); }
-    if (qjChannels) { renderRecent(); renderChannels(); }
+    gxSig = null;
     if (scChannels) { scRenderRecent(); renderBotOptions(); renderTextChannels(); }
   }
   document.addEventListener('click', function(event){
@@ -1632,10 +1503,9 @@ input.invalid{border-color:var(--red) !important;}
     baseUptime = summary.uptime_seconds || 0;
     baseUptimeStamp = Date.now();
 
-    renderStatus(bots);
-    renderBots(bots);
+    renderHeader(bots);
     setTokenCount(summary.total_tokens || 0);
-    scheduleChannelRefresh();
+    scheduleVoiceRefresh();
     renderBotOptions();
   }
   function statusOf(bot){
@@ -1644,101 +1514,11 @@ input.invalid{border-color:var(--red) !important;}
     if (bot.ready) { return {label: t('status_ready'), cls: 'badge-ready'}; }
     return {label: t('status_connecting'), cls: 'badge-connecting'};
   }
-  function toggleButton(bot, field, active, iconName, labelKey){
-    return '<button class="toggle-btn' + (active ? ' on' : '') + '" type="button"'
-      + ' data-bot-id="' + esc(bot.id || bot.token_masked) + '"'
-      + ' data-field="' + field + '"'
-      + ' data-value="' + (active ? 'false' : 'true') + '"'
-      + ' title="' + esc(t('title_toggle_' + field)) + '"'
-      + ' aria-pressed="' + (active ? 'true' : 'false') + '">'
-      + icon(iconName) + '<span>' + esc(t(labelKey)) + '</span></button>';
-  }
-  function actionButton(bot, action, iconName, labelKey){
-    return '<button class="toggle-btn" type="button"'
-      + ' data-action="' + action + '"'
-      + ' data-bot-id="' + esc(bot.id || bot.token_masked) + '"'
-      + ' title="' + esc(t(labelKey)) + '">'
-      + icon(iconName) + '<span>' + esc(t(labelKey)) + '</span></button>';
-  }
-  function botCard(bot){
-    var st = statusOf(bot);
-    var user = bot.user || {};
-    var name = user.display_name || user.username || t('msg_not_logged_in');
-    var avatar = user.avatar_url
-      ? '<img class="avatar" src="' + esc(user.avatar_url) + '" alt="">'
-      : '<span class="avatar avatar-fallback">' + icon('user') + '</span>';
-    var ping = (typeof bot.latency_ms === 'number' && bot.latency_ms >= 0) ? ' · ' + bot.latency_ms + ' ms' : '';
-    var dotCls = bot.error ? 'error' : (bot.is_in_voice ? 'voice' : (bot.ready ? 'ready' : ''));
-    var sub = bot.error
-      ? '<div class="bot-row-sub err" title="' + esc(bot.error) + '"><span class="dot-s error"></span>' + esc(bot.error) + '</div>'
-      : '<div class="bot-row-sub"><span class="dot-s ' + dotCls + '"></span>'
-        + esc(bot.is_in_voice ? (bot.channel_name || '') + (bot.guild_name ? ' · ' + bot.guild_name : '') : st.label)
-        + esc(ping) + '</div>';
-    // Bật/tắt từng tài khoản chỉ có nghĩa khi đang ở trong voice
-    var toggles = bot.is_in_voice
-      ? toggleButton(bot, 'mute', !!bot.is_mute, bot.is_mute ? 'micOff' : 'mic', 'lbl_mic')
-        + toggleButton(bot, 'deaf', !!bot.is_deaf, bot.is_deaf ? 'deafOff' : 'deaf', 'lbl_deaf')
-        + toggleButton(bot, 'video', !!bot.is_video, bot.is_video ? 'cam' : 'camOff', 'lbl_cam')
-        + toggleButton(bot, 'stream', !!bot.is_streaming, bot.is_streaming ? 'screen' : 'screenOff', 'lbl_stream')
-        + '<span class="sep"></span>'
-      : '';
-    return '<article class="bot-row' + (bot.error ? ' has-error' : '') + '" data-bot-id="' + esc(bot.id || bot.token_masked) + '">'
-      + avatar
-      + '<div class="bot-row-info"><div class="bot-row-name">' + esc(name) + '</div>' + sub + '</div>'
-      + '<div class="bot-row-actions">'
-      + toggles
-      + (bot.ready ? actionButton(bot, 'move', 'move', 'btn_move') + actionButton(bot, 'chat', 'message', 'btn_chat') : '')
-      + '</div></article>';
-  }
-  function renderBots(bots){
-    botsCount.textContent = bots.length;
-    botEmpty.classList.toggle('hidden', bots.length > 0);
-    botsGrid.innerHTML = bots.map(botCard).join('');
-  }
-  var ALL_FIELDS = {mute: 'is_mute', deaf: 'is_deaf', video: 'is_video', stream: 'is_streaming'};
-  function renderStatus(bots){
-    var inVoice = bots.filter(function(bot){ return bot.is_in_voice; });
-    var errored = bots.filter(function(bot){ return !!bot.error; });
-    var channels = {};
-    inVoice.forEach(function(bot){ channels[(bot.guild_name || '') + '|' + (bot.channel_name || '')] = bot; });
-    var channelKeys = Object.keys(channels);
-
-    statusCard.classList.toggle('in-voice', inVoice.length > 0);
-    statusCard.classList.toggle('connecting', bots.length > 0 && !inVoice.length && !errored.length);
+  function renderHeader(bots){
+    var inVoice = bots.filter(function(bot){ return bot.is_in_voice; }).length;
     stopBtn.classList.toggle('hidden', !bots.length);
-
-    if (!bots.length) {
-      statusTitle.textContent = t('status_idle_title');
-      statusSub.textContent = t('status_idle_sub');
-    } else if (!inVoice.length) {
-      var ready = bots.filter(function(bot){ return bot.ready; }).length;
-      statusTitle.textContent = t(errored.length ? 'status_not_in_title' : 'status_connecting_title');
-      statusSub.textContent = t('status_online_sub').replace('{n}', ready).replace('{t}', bots.length);
-    } else if (channelKeys.length === 1) {
-      var first = channels[channelKeys[0]];
-      statusTitle.textContent = t('status_in_title').replace('{c}', first.channel_name || '—');
-      statusSub.textContent = t('status_in_sub').replace('{g}', first.guild_name || '—')
-        .replace('{n}', inVoice.length).replace('{t}', bots.length);
-    } else {
-      statusTitle.textContent = t('status_multi_title').replace('{k}', channelKeys.length);
-      statusSub.textContent = t('status_multi_sub').replace('{n}', inVoice.length).replace('{t}', bots.length);
-    }
-
-    statusErrors.classList.toggle('hidden', !errored.length);
-    if (errored.length) {
-      statusErrorsText.textContent = t('status_errors').replace('{n}', errored.length).replace('{e}', errored[0].error);
-      statusErrorsText.title = errored[0].error;
-    }
-
-    switchRow.classList.toggle('hidden', !inVoice.length);
-    switchRow.querySelectorAll('[data-all-field]').forEach(function(button){
-      var key = ALL_FIELDS[button.getAttribute('data-all-field')];
-      var onCount = inVoice.filter(function(bot){ return !!bot[key]; }).length;
-      var allOn = inVoice.length > 0 && onCount === inVoice.length;
-      button.classList.toggle('on', allOn);
-      button.classList.toggle('mixed', onCount > 0 && !allOn);
-      button.setAttribute('aria-pressed', allOn ? 'true' : (onCount > 0 ? 'mixed' : 'false'));
-    });
+    voicePill.classList.toggle('hidden', !bots.length);
+    voicePillText.textContent = t('voice_pill').replace('{n}', inVoice).replace('{t}', bots.length);
   }
   function renderTunnel(status){
     var url = status.public_url || '';
@@ -1776,36 +1556,6 @@ input.invalid{border-color:var(--red) !important;}
       else { toast(t('msg_sent_command').replace('{action}', label).replace('{n}', data.affected), 'success'); }
     });
   }
-  // Công tắc chung: đang bật hết thì tắt hết, còn lại thì bật hết
-  switchRow.addEventListener('click', function(event){
-    var button = event.target.closest('[data-all-field]');
-    if (!button) { return; }
-    var payload = {};
-    payload[button.getAttribute('data-all-field')] = !button.classList.contains('on');
-    runToggle(payload, button.textContent.trim());
-  });
-  botsGrid.addEventListener('click', function(event){
-    var actionBtn = event.target.closest('[data-action]');
-    if (actionBtn) {
-      var action = actionBtn.getAttribute('data-action');
-      var actionBotId = actionBtn.getAttribute('data-bot-id');
-      if (action === 'move') { openMoveModal(actionBotId); }
-      else if (action === 'chat') { openChatPanel(actionBotId); }
-      return;
-    }
-    var button = event.target.closest('.toggle-btn');
-    if (!button) { return; }
-    var field = button.getAttribute('data-field');
-    var labelKeys = {mute: 'lbl_mic', deaf: 'lbl_deaf', video: 'lbl_cam', stream: 'lbl_stream'};
-    var fieldLabel = t(labelKeys[field] || 'lbl_cam');
-    var payload = {bot_id: button.getAttribute('data-bot-id')};
-    payload[field] = button.getAttribute('data-value') === 'true';
-    api('/api/toggle', 'POST', payload).then(function(data){
-      if (!data) { toast(t('err_request_failed'), 'error'); return; }
-      if (data.affected === 0) { toast(t('msg_no_bots'), 'error'); }
-      else { toast(t('msg_sent_command').replace('{action}', fieldLabel).replace('{n}', data.affected), 'success'); }
-    });
-  });
   startBtn.addEventListener('click', function(){
     var parts = channelIdsInput.value.split(/[\s,]+/).filter(Boolean);
     if (parts.some(function(part){ var p = parseChannelInput(part); return p && p.invite; })) {
@@ -2002,50 +1752,6 @@ input.invalid{border-color:var(--red) !important;}
     toggleEmojiPicker(false);
   });
 
-  /* ---------- Modals: Move / Chat ---------- */
-  function openModal(el){
-    el.classList.remove('hidden');
-    var first = el.querySelector('input, textarea, button');
-    if (first) { first.focus(); }
-  }
-  function closeModal(el){
-    if (el) { el.classList.add('hidden'); }
-  }
-  function openMoveModal(botId){
-    moveBotId = botId;
-    moveChannels.innerHTML = '<div class="muted">' + esc(t('move_loading')) + '</div>';
-    openModal(moveModal);
-    api('/api/bots/' + encodeURIComponent(botId) + '/voice-channels', 'GET').then(function(data){
-      if (!data) { toast(t('err_request_failed'), 'error'); closeModal(moveModal); return; }
-      var channels = data.channels || [];
-      if (!channels.length) {
-        moveChannels.innerHTML = '<div class="muted">' + esc(t('move_empty')) + '</div>';
-        return;
-      }
-      moveChannels.innerHTML = channels.map(function(ch){
-        var limit = ch.user_limit ? String(ch.user_limit) : '∞';
-        return '<button class="channel-item" type="button" data-channel-id="' + esc(ch.id) + '">'
-          + '<span>' + esc(ch.name) + '</span>'
-          + '<span class="channel-meta">' + esc(ch.guild_name) + ' · ' + (ch.member_count || 0) + '/' + limit + '</span>'
-          + '</button>';
-      }).join('');
-    });
-  }
-  moveChannels.addEventListener('click', function(event){
-    var item = event.target.closest('.channel-item');
-    if (!item || !moveBotId) { return; }
-    var channelId = item.getAttribute('data-channel-id');
-    api('/api/move', 'POST', {target_channel_id: channelId, bot_ids: [moveBotId]}).then(function(data){
-      if (!data) { toast(t('err_request_failed'), 'error'); return; }
-      toast(t('msg_moved').replace('{n}', data.moved), 'success');
-      closeModal(moveModal);
-    });
-  });
-  moveCancel.addEventListener('click', function(){ closeModal(moveModal); });
-  moveModal.addEventListener('click', function(event){
-    if (event.target === moveModal) { closeModal(moveModal); }
-  });
-
   /* ---------- Chat All ---------- */
   chatAllChannel.value = localStorage.getItem(CHAT_CHANNEL_KEY) || '';
   chatAllSend.addEventListener('click', function(){
@@ -2064,12 +1770,7 @@ input.invalid{border-color:var(--red) !important;}
     });
   });
 
-  /* ---------- Quick join ---------- */
-  var RECENT_KEY = 'mgl_recent_channels';
-  var qjInput = $('qj-input'), qjJoin = $('qj-join'), qjRefresh = $('qj-refresh');
-  var qjRecentWrap = $('qj-recent-wrap'), qjRecent = $('qj-recent'), qjChannels = $('qj-channels');
-  var qjChannelList = [], qjBusy = false, qjTimer = null;
-
+  /* ---------- Voice: chọn server → chọn tài khoản → chọn kênh ---------- */
   function parseChannelInput(value){
     value = String(value || '').trim();
     if (/discord(?:app)?\.(?:gg|com\/invite)\//i.test(value)) { return {invite: true}; }
@@ -2078,7 +1779,7 @@ input.invalid{border-color:var(--red) !important;}
     if (SNOWFLAKE_RE.test(value)) { return {id: value}; }
     return null;
   }
-  /* Danh sách "gần đây" dùng chung cho kênh voice và kênh chat */
+  /* Danh sách "gần đây" cho kênh chat */
   function recentLoad(key){
     try {
       var list = JSON.parse(localStorage.getItem(key) || '[]');
@@ -2120,59 +1821,73 @@ input.invalid{border-color:var(--red) !important;}
     }).join('');
   }
 
-  function loadRecent(){ return recentLoad(RECENT_KEY); }
-  function findRecent(id){
-    return loadRecent().filter(function(item){ return item.id === id; })[0] || null;
-  }
-  function saveRecent(entry){ recentSave(RECENT_KEY, entry); renderRecent(); }
-  function removeRecent(id){ recentRemove(RECENT_KEY, id); renderRecent(); }
-  function renderRecent(){ recentRender(RECENT_KEY, qjRecentWrap, qjRecent); }
-  function channelMeta(id){
-    return qjChannelList.filter(function(ch){ return ch.id === id; })[0] || null;
-  }
-  /* Cột Server: chọn một server, xem các kênh voice và người đang ở trong từng kênh */
   var GX_KEY = 'mgl_guild';
-  var gxGuild = $('gx-guild'), gxSig = null, gxLoadedGuild = '', gxData = null;
+  var startCard = $('start-card'), voicePanel = $('voice-panel'), startAllBtn = $('start-all-btn');
+  var gxGuild = $('gx-guild'), qjRefresh = $('qj-refresh'), qjChannels = $('qj-channels');
+  var qjInput = $('qj-input'), qjJoin = $('qj-join');
+  var gxAccountsEl = $('gx-accounts'), gxSelectAll = $('gx-select-all');
+  var gxSelectedHint = $('gx-selected-hint'), gxChat = $('gx-chat');
+  var selTools = document.querySelectorAll('[data-sel-field]');
+  var gxGuilds = [], gxData = null, gxLoadedGuild = '', gxSig = null, gxTimer = null;
+  var gxPicked = {}, gxKnown = {};
 
-  function guildList(){
-    var seen = {}, list = [];
-    qjChannelList.forEach(function(ch){
-      if (!seen[ch.guild_id]) { seen[ch.guild_id] = {id: ch.guild_id, name: ch.guild_name, here: 0}; list.push(seen[ch.guild_id]); }
-      seen[ch.guild_id].here += ch.bots_here || 0;
-    });
-    return list;
+  function isRunning(){ return !!(lastSummary && lastSummary.total_bots > 0); }
+  function isOnline(){ return !!(lastSummary && lastSummary.ready_bots > 0); }
+  function botById(id){
+    return ((lastSummary && lastSummary.bots) || []).filter(function(bot){ return String(bot.id) === String(id); })[0] || null;
   }
-  function renderChannels(){
-    var online = !!(lastSummary && lastSummary.ready_bots > 0);
-    var guilds = online ? guildList() : [];
-    var signature = lang + '|' + guilds.map(function(g){ return g.id + ':' + g.name + ':' + (g.here > 0); }).join(',');
-    if (signature !== gxSig) {
-      gxSig = signature;
-      var current = gxGuild.value || localStorage.getItem(GX_KEY) || '';
-      gxGuild.innerHTML = guilds.length
-        ? guilds.map(function(g){
-            return '<option value="' + esc(g.id) + '">' + esc(g.name) + (g.here > 0 ? ' — ' + esc(t('qj_here')) : '') + '</option>';
-          }).join('')
-        : '<option value="">' + esc(t(online ? 'qj_empty' : 'gx_offline')) + '</option>';
-      gxGuild.disabled = !guilds.length;
-      // Giữ server đang chọn; lần đầu ưu tiên server có tài khoản đang ở trong
-      var pick = guilds.filter(function(g){ return g.id === current; })[0]
-        || guilds.filter(function(g){ return g.here > 0; })[0]
-        || guilds[0];
-      if (pick) { gxGuild.value = pick.id; }
-    }
-    if (!online) {
-      gxLoadedGuild = '';
-      gxData = null;
-      renderAccounts();
-      qjChannels.innerHTML = '<div class="muted">' + esc(t('qj_no_bots')) + '</div>';
-      return;
-    }
-    if (!guilds.length) {
-      qjChannels.innerHTML = '<div class="muted">' + esc(t('qj_empty')) + '</div>';
-      return;
-    }
-    loadGuild(gxGuild.value === gxLoadedGuild);
+
+  // Trang Voice chỉ có một trong ba trạng thái: chưa có token / chưa đăng nhập / đang chạy
+  function renderVoicePage(){
+    var hasTokens = lastTokenCount > 0;
+    onboard.classList.toggle('hidden', hasTokens);
+    startCard.classList.toggle('hidden', !hasTokens || isRunning());
+    voicePanel.classList.toggle('hidden', !hasTokens || !isRunning());
+    if (hasTokens && isRunning() && currentView === 'voice') { loadGuilds(); }
+  }
+  function scheduleVoiceRefresh(){
+    if (currentView !== 'voice') { return; }
+    if (gxTimer) { clearTimeout(gxTimer); }
+    gxTimer = setTimeout(renderVoicePage, 800);
+  }
+  function explorerMessage(message){
+    gxAccountsEl.innerHTML = '';
+    qjChannels.innerHTML = '<div class="muted">' + esc(message) + '</div>';
+    gxSelectedHint.textContent = '';
+    gxChat.disabled = true;
+    selTools.forEach(function(button){ button.disabled = true; });
+  }
+  function loadGuilds(){
+    if (!token) { return; }
+    if (!isOnline()) { gxGuilds = []; renderGuildSelect(); explorerMessage(t('gx_offline')); return; }
+    api('/api/voice-channels', 'GET').then(function(data){
+      var seen = {}, list = [];
+      ((data && data.channels) || []).forEach(function(ch){
+        if (!seen[ch.guild_id]) { seen[ch.guild_id] = {id: ch.guild_id, name: ch.guild_name, here: 0}; list.push(seen[ch.guild_id]); }
+        seen[ch.guild_id].here += ch.bots_here || 0;
+      });
+      gxGuilds = list;
+      renderGuildSelect();
+      if (gxGuild.value) { loadGuild(gxGuild.value === gxLoadedGuild); }
+      else { explorerMessage(t('qj_empty')); }
+    });
+  }
+  function renderGuildSelect(){
+    var signature = lang + '|' + gxGuilds.map(function(g){ return g.id + ':' + g.name + ':' + (g.here > 0); }).join(',');
+    if (signature === gxSig) { return; }
+    gxSig = signature;
+    var current = gxGuild.value || localStorage.getItem(GX_KEY) || '';
+    gxGuild.innerHTML = gxGuilds.length
+      ? gxGuilds.map(function(g){
+          return '<option value="' + esc(g.id) + '">' + esc(g.name) + (g.here > 0 ? ' — ' + esc(t('qj_here')) : '') + '</option>';
+        }).join('')
+      : '<option value="">' + esc(t(isOnline() ? 'qj_empty' : 'gx_offline')) + '</option>';
+    gxGuild.disabled = !gxGuilds.length;
+    // Giữ server đang chọn; lần đầu ưu tiên server có tài khoản đang ở trong
+    var pick = gxGuilds.filter(function(g){ return g.id === current; })[0]
+      || gxGuilds.filter(function(g){ return g.here > 0; })[0]
+      || gxGuilds[0];
+    if (pick) { gxGuild.value = pick.id; }
   }
   function loadGuild(silent){
     var guildId = gxGuild.value;
@@ -2182,9 +1897,63 @@ input.invalid{border-color:var(--red) !important;}
     if (!silent || !gxData) { qjChannels.innerHTML = '<div class="muted">' + esc(t('qj_loading')) + '</div>'; }
     api('/api/guilds/' + encodeURIComponent(guildId) + '/voice', 'GET').then(function(data){
       if (guildId !== gxGuild.value) { return; }
-      if (!data) { qjChannels.innerHTML = '<div class="muted">' + esc(t('err_request_failed')) + '</div>'; return; }
+      if (!data) { explorerMessage(t('err_request_failed')); return; }
       gxData = data;
       renderExplorer();
+    });
+  }
+
+  /* Tài khoản trong server đang chọn; tài khoản mới thấy lần đầu được chọn sẵn */
+  function gxAccounts(){ return (gxData && gxData.accounts) || []; }
+  function gxSelectedIds(){
+    return gxAccounts().filter(function(acc){ return gxPicked[acc.id]; }).map(function(acc){ return acc.id; });
+  }
+  var SEL_FIELDS = {mute: 'is_mute', deaf: 'is_deaf', video: 'is_video', stream: 'is_streaming'};
+  function renderAccounts(){
+    var accounts = gxAccounts();
+    accounts.forEach(function(acc){
+      if (!gxKnown[acc.id]) { gxKnown[acc.id] = true; gxPicked[acc.id] = true; }
+    });
+    if (!accounts.length) {
+      gxAccountsEl.innerHTML = '<div class="muted">' + esc(t('gx_no_accounts')) + '</div>';
+    } else {
+      gxAccountsEl.innerHTML = accounts.map(function(acc){
+        var bot = botById(acc.id) || {};
+        var checked = !!gxPicked[acc.id];
+        var avatar = acc.avatar_url
+          ? '<img class="avatar" src="' + esc(acc.avatar_url) + '" alt="">'
+          : '<span class="avatar avatar-fallback">' + icon('user') + '</span>';
+        var sub = bot.error
+          ? '<div class="gx-acc-sub err" title="' + esc(bot.error) + '">' + esc(bot.error) + '</div>'
+          : (acc.voice_channel_name
+            ? '<div class="gx-acc-sub in">' + esc(acc.voice_channel_name) + '</div>'
+            : '<div class="gx-acc-sub">' + esc(t('gx_not_in_voice')) + '</div>');
+        var state = (bot.is_mute ? '<span class="off">' + icon('micOff') + '</span>' : '')
+          + (bot.is_deaf ? '<span class="off">' + icon('deafOff') + '</span>' : '')
+          + (bot.is_video ? '<span class="live">' + icon('cam') + '</span>' : '')
+          + (bot.is_streaming ? '<span class="live">' + icon('screen') + '</span>' : '');
+        return '<button class="gx-account' + (checked ? ' checked' : '') + '" type="button" role="checkbox" aria-checked="' + checked + '" data-gx-account="' + esc(acc.id) + '">'
+          + '<span class="gx-check">' + (checked ? icon('tick') : '') + '</span>' + avatar
+          + '<div class="gx-acc-info"><div class="gx-acc-name">' + esc(acc.name) + '</div>' + sub + '</div>'
+          + '<span class="member-icons">' + state + '</span></button>';
+      }).join('');
+    }
+    var selected = gxSelectedIds();
+    gxSelectedHint.textContent = t('gx_selected').replace('{n}', selected.length).replace('{t}', accounts.length);
+    gxSelectAll.textContent = t(selected.length === accounts.length && accounts.length ? 'gx_select_none' : 'gx_select_all');
+    // Nhắn tin luôn từ đúng một tài khoản
+    gxChat.disabled = selected.length !== 1;
+    gxChat.title = selected.length === 1 ? '' : t('gx_chat_one');
+    // Công tắc áp dụng cho tài khoản đã chọn đang trong voice
+    var inVoice = selected.map(botById).filter(function(bot){ return bot && bot.is_in_voice; });
+    selTools.forEach(function(button){
+      var key = SEL_FIELDS[button.getAttribute('data-sel-field')];
+      var onCount = inVoice.filter(function(bot){ return !!bot[key]; }).length;
+      var allOn = inVoice.length > 0 && onCount === inVoice.length;
+      button.disabled = !inVoice.length;
+      button.classList.toggle('on', allOn);
+      button.classList.toggle('mixed', onCount > 0 && !allOn);
+      button.setAttribute('aria-pressed', allOn ? 'true' : (onCount > 0 ? 'mixed' : 'false'));
     });
   }
   function gxMember(member){
@@ -2199,43 +1968,6 @@ input.invalid{border-color:var(--red) !important;}
       + '<span class="gx-member-name">' + esc(member.display_name || member.name)
       + (member.is_own ? '<span class="gx-tag">' + esc(t('gx_token_tag')) + '</span>' : '') + '</span>'
       + '<span class="member-icons">' + icons + '</span></div>';
-  }
-  /* Tài khoản được chọn trong server hiện tại; tài khoản mới thấy lần đầu được chọn sẵn */
-  var gxAccountsEl = $('gx-accounts'), gxSelectAll = $('gx-select-all');
-  var gxSelectedHint = $('gx-selected-hint'), gxChat = $('gx-chat');
-  var gxPicked = {}, gxKnown = {};
-
-  function gxAccounts(){ return (gxData && gxData.accounts) || []; }
-  function gxSelectedIds(){
-    return gxAccounts().filter(function(acc){ return gxPicked[acc.id]; }).map(function(acc){ return acc.id; });
-  }
-  function renderAccounts(){
-    var accounts = gxAccounts();
-    accounts.forEach(function(acc){
-      if (!gxKnown[acc.id]) { gxKnown[acc.id] = true; gxPicked[acc.id] = true; }
-    });
-    if (!accounts.length) {
-      gxAccountsEl.innerHTML = '<div class="muted">' + esc(t('gx_no_accounts')) + '</div>';
-    } else {
-      gxAccountsEl.innerHTML = accounts.map(function(acc){
-        var checked = !!gxPicked[acc.id];
-        var avatar = acc.avatar_url
-          ? '<img class="avatar" src="' + esc(acc.avatar_url) + '" alt="">'
-          : '<span class="avatar avatar-fallback">' + icon('user') + '</span>';
-        var sub = acc.voice_channel_name
-          ? '<div class="gx-acc-sub in">' + esc(acc.voice_channel_name) + '</div>'
-          : '<div class="gx-acc-sub">' + esc(t('gx_not_in_voice')) + '</div>';
-        return '<button class="gx-account' + (checked ? ' checked' : '') + '" type="button" role="checkbox" aria-checked="' + checked + '" data-gx-account="' + esc(acc.id) + '">'
-          + '<span class="gx-check">' + (checked ? icon('tick') : '') + '</span>' + avatar
-          + '<div class="gx-acc-info"><div class="gx-acc-name">' + esc(acc.name) + '</div>' + sub + '</div></button>';
-      }).join('');
-    }
-    var count = gxSelectedIds().length;
-    gxSelectedHint.textContent = t('gx_selected').replace('{n}', count).replace('{t}', accounts.length);
-    gxSelectAll.textContent = t(count === accounts.length && accounts.length ? 'gx_select_none' : 'gx_select_all');
-    // Nhắn tin luôn từ đúng một tài khoản
-    gxChat.disabled = count !== 1;
-    gxChat.title = count === 1 ? '' : t('gx_chat_one');
   }
   function renderExplorer(){
     renderAccounts();
@@ -2264,6 +1996,39 @@ input.invalid{border-color:var(--red) !important;}
         + '</div>';
     }).join('');
   }
+  function joinSelected(channelId){
+    var ids = gxSelectedIds();
+    if (!ids.length) { toast(t('gx_pick_first'), 'error'); return; }
+    api('/api/move', 'POST', {target_channel_id: channelId, bot_ids: ids}).then(function(data){
+      if (!data) { toast(t('err_request_failed'), 'error'); return; }
+      if (data.moved > 0) { toast(t('msg_moved').replace('{n}', data.moved), 'success'); }
+      else { toast(t('msg_no_bots'), 'error'); }
+      loadGuild(true);
+    });
+  }
+  function toggleSelected(field, value){
+    var ids = gxSelectedIds().filter(function(id){ var bot = botById(id); return bot && bot.is_in_voice; });
+    if (!ids.length) { return; }
+    Promise.all(ids.map(function(id){
+      var payload = {bot_id: id};
+      payload[field] = value;
+      return api('/api/toggle', 'POST', payload);
+    })).then(function(results){
+      var affected = results.reduce(function(sum, data){ return sum + ((data && data.affected) || 0); }, 0);
+      if (!affected) { toast(t('msg_no_bots'), 'error'); }
+    });
+  }
+
+  startAllBtn.addEventListener('click', function(){
+    startAllBtn.disabled = true;
+    api('/api/start', 'POST', {mode: 'normal', channel_ids: [], delay: parseFloat(delayInput.value) || 5, leader_count: 5}).then(function(data){
+      startAllBtn.disabled = false;
+      if (!data) { toast(t('err_request_failed'), 'error'); return; }
+      toast(t('msg_starting'), 'info');
+    });
+  });
+  gxGuild.addEventListener('change', function(){ gxData = null; loadGuild(false); });
+  qjRefresh.addEventListener('click', loadGuilds);
   gxAccountsEl.addEventListener('click', function(event){
     var item = event.target.closest('[data-gx-account]');
     if (!item) { return; }
@@ -2281,171 +2046,31 @@ input.invalid{border-color:var(--red) !important;}
     var ids = gxSelectedIds();
     if (ids.length === 1) { openChatPanel(ids[0], gxData && gxData.name); }
   });
-  function joinSelected(channelId){
-    var ids = gxSelectedIds();
-    if (!ids.length) { toast(t('gx_pick_first'), 'error'); return; }
-    var meta = channelMeta(channelId);
-    if (meta) { saveRecent({id: channelId, name: meta.name, guild: meta.guild_name}); }
-    api('/api/move', 'POST', {target_channel_id: channelId, bot_ids: ids}).then(function(data){
-      if (!data) { toast(t('err_request_failed'), 'error'); return; }
-      if (data.moved > 0) { toast(t('msg_moved').replace('{n}', data.moved), 'success'); }
-      else { toast(t('msg_no_bots'), 'error'); }
-      loadGuild(true);
+  selTools.forEach(function(button){
+    button.addEventListener('click', function(){
+      toggleSelected(button.getAttribute('data-sel-field'), !button.classList.contains('on'));
     });
-  }
-  gxGuild.addEventListener('change', function(){ gxData = null; loadGuild(false); });
-  // Người khác vào/ra kênh không phát sự kiện tới dashboard nên tự làm mới định kỳ
-  setInterval(function(){
-    if (currentView === 'voice' && gxLoadedGuild && !document.hidden) { loadGuild(true); }
-  }, 5000);
-  function loadChannels(){
-    if (!token) { return; }
-    if (!(lastSummary && lastSummary.ready_bots > 0)) { qjChannelList = []; renderChannels(); return; }
-    if (!qjChannelList.length) { qjChannels.innerHTML = '<div class="muted">' + esc(t('qj_loading')) + '</div>'; }
-    api('/api/voice-channels', 'GET').then(function(data){
-      qjChannelList = (data && data.channels) || [];
-      renderChannels();
-      // Điền tên cho kênh gần đây được join bằng link khi danh sách chưa tải
-      if (recentFill(RECENT_KEY, channelMeta)) { renderRecent(); }
-    });
-  }
-  function scheduleChannelRefresh(){
-    if (currentView !== 'voice') { return; }
-    if (qjTimer) { clearTimeout(qjTimer); }
-    qjTimer = setTimeout(loadChannels, 800);
-  }
-  function quickJoin(channelId){
-    if (qjBusy) { return; }
-    var meta = channelMeta(channelId);
-    var previous = findRecent(channelId) || {};
-    saveRecent({
-      id: channelId,
-      name: meta ? meta.name : (previous.name || ''),
-      guild: meta ? meta.guild_name : (previous.guild || '')
-    });
-    var running = !!(lastSummary && lastSummary.total_bots > 0);
-    qjBusy = true;
-    qjJoin.disabled = true;
-    if (!running) { toast(t('msg_joining'), 'info'); }
-    var request = running
-      ? api('/api/move', 'POST', {target_channel_id: channelId})
-      : api('/api/start', 'POST', {mode: 'normal', channel_ids: [channelId], delay: parseFloat(delayInput.value) || 0, leader_count: 5});
-    request.then(function(data){
-      qjBusy = false;
-      qjJoin.disabled = false;
-      if (!data) { toast(t('err_request_failed'), 'error'); return; }
-      if (running) {
-        if (data.moved > 0) { toast(t('msg_moved').replace('{n}', data.moved), 'success'); }
-        else { toast(t('msg_no_bots'), 'error'); }
-      }
-      loadChannels();
-    });
-  }
+  });
+  qjChannels.addEventListener('click', function(event){
+    var button = event.target.closest('[data-gx-join]');
+    if (button && !button.disabled) { joinSelected(button.getAttribute('data-gx-join')); }
+  });
   qjJoin.addEventListener('click', function(){
     var parsed = parseChannelInput(qjInput.value);
     if (parsed && parsed.invite) { toast(t('err_invite_link'), 'error'); return; }
     if (!parsed) { qjInput.classList.add('invalid'); toast(t('err_bad_link'), 'error'); return; }
     qjInput.classList.remove('invalid');
     qjInput.value = '';
-    quickJoin(parsed.id);
+    joinSelected(parsed.id);
   });
   qjInput.addEventListener('keydown', function(event){
     if (event.key === 'Enter') { qjJoin.click(); }
   });
   qjInput.addEventListener('input', function(){ qjInput.classList.remove('invalid'); });
-  qjRefresh.addEventListener('click', loadChannels);
-  qjChannels.addEventListener('click', function(event){
-    var button = event.target.closest('[data-gx-join]');
-    if (button && !button.disabled) { joinSelected(button.getAttribute('data-gx-join')); }
-  });
-
-  /* Bảng chi tiết: ai đang ở trong kênh voice được chọn */
-  var qjDetail = $('qj-detail'), qjDetailName = $('qj-detail-name'), qjDetailSub = $('qj-detail-sub');
-  var qjMembers = $('qj-members'), qjDetailJoin = $('qj-detail-join'), qjDetailClose = $('qj-detail-close');
-  var qjSelected = '';
-
-  function memberCard(member){
-    var avatar = member.avatar_url
-      ? '<img class="avatar" src="' + esc(member.avatar_url) + '" alt="">'
-      : '<span class="avatar avatar-fallback">' + icon('user') + '</span>';
-    var sub = member.is_own
-      ? '<span class="member-own">' + esc(t('qj_your_bot')) + '</span> · @' + esc(member.name)
-      : '@' + esc(member.name);
-    var icons = (member.mute ? '<span class="off" title="Mute">' + icon('micOff') + '</span>' : '')
-      + (member.deaf ? '<span class="off" title="Deaf">' + icon('deafOff') + '</span>' : '')
-      + (member.video ? '<span class="live" title="Cam">' + icon('cam') + '</span>' : '')
-      + (member.stream ? '<span class="live" title="Stream">' + icon('screen') + '</span>' : '');
-    return '<div class="member">' + avatar
-      + '<div class="member-info"><div class="member-name">' + esc(member.display_name || member.name) + '</div>'
-      + '<div class="member-sub">' + sub + '</div></div>'
-      + '<div class="member-icons">' + icons + '</div></div>';
-  }
-  function renderMembers(detail){
-    var limit = detail.user_limit ? String(detail.user_limit) : '∞';
-    qjDetailName.textContent = detail.name;
-    qjDetailSub.textContent = detail.guild_name + ' · ' + t('qj_people').replace('{n}', detail.members.length + '/' + limit);
-    qjMembers.innerHTML = detail.members.length
-      ? detail.members.map(memberCard).join('')
-      : '<div class="muted">' + esc(t('qj_members_empty')) + '</div>';
-    var ownHere = detail.members.filter(function(member){ return member.is_own; }).length;
-    var total = (lastSummary && lastSummary.total_bots) || 0;
-    setDetailJoinState(total > 0 && ownHere >= total);
-  }
-  function loadMembers(){
-    var channelId = qjSelected;
-    if (!channelId || !token) { return; }
-    if (!(lastSummary && lastSummary.ready_bots > 0)) {
-      // Chưa có bot online thì không xem được ai trong kênh, nhưng vẫn vào được
-      qjMembers.innerHTML = '<div class="muted">' + esc(t('qj_detail_offline')) + '</div>';
-      return;
-    }
-    apiWithStatus('/api/voice-channels/' + encodeURIComponent(channelId) + '/members', 'GET').then(function(result){
-      if (channelId !== qjSelected) { return; }
-      if (result.status === 200 && result.data) { renderMembers(result.data); return; }
-      qjMembers.innerHTML = '<div class="muted">' + esc(t(result.status === 404 ? 'qj_members_gone' : 'err_request_failed')) + '</div>';
-    });
-  }
-  function selectVoiceChannel(channelId){
-    qjSelected = channelId;
-    var meta = channelMeta(channelId);
-    var recent = findRecent(channelId) || {};
-    qjDetailName.textContent = (meta && meta.name) || recent.name || channelId;
-    qjDetailSub.textContent = (meta && meta.guild_name) || recent.guild || '';
-    qjMembers.innerHTML = '<div class="muted">' + esc(t('qj_loading')) + '</div>';
-    setDetailJoinState(false);
-    openModal(qjDetail);
-    qjDetailJoin.focus();
-    loadMembers();
-  }
-  function setDetailJoinState(alreadyHere){
-    qjDetailJoin.disabled = alreadyHere;
-    $('qj-detail-join-label').textContent = t(alreadyHere ? 'qj_already_here' : 'qj_join_this');
-  }
-  function closeVoiceDetail(){
-    if (qjDetail.classList.contains('hidden')) { return; }
-    qjSelected = '';
-    closeModal(qjDetail);
-  }
-  qjDetailClose.addEventListener('click', closeVoiceDetail);
-  qjDetail.addEventListener('click', function(event){
-    if (event.target === qjDetail) { closeVoiceDetail(); }
-  });
-  qjDetailJoin.addEventListener('click', function(){
-    if (!qjSelected) { return; }
-    quickJoin(qjSelected);
-    closeVoiceDetail();
-  });
   // Người khác vào/ra kênh không phát sự kiện tới dashboard nên tự làm mới định kỳ
   setInterval(function(){
-    if (qjSelected && !document.hidden) { loadMembers(); }
+    if (currentView === 'voice' && gxLoadedGuild && isOnline() && !document.hidden) { loadGuild(true); }
   }, 5000);
-  // Bấm kênh ở đâu cũng mở cùng một hộp xem kênh, không tự vào ngay
-  qjRecent.addEventListener('click', function(event){
-    var remove = event.target.closest('[data-remove-recent]');
-    if (remove) { removeRecent(remove.getAttribute('data-remove-recent')); return; }
-    var chip = event.target.closest('[data-recent-id]');
-    if (chip) { selectVoiceChannel(chip.getAttribute('data-recent-id')); }
-  });
 
   /* ---------- Single-account chat ---------- */
   var SC_RECENT_KEY = 'mgl_recent_text_channels';
@@ -2611,7 +2236,6 @@ input.invalid{border-color:var(--red) !important;}
   scSend.addEventListener('click', sendSingle);
 
   /* ---------- Init ---------- */
-  renderRecent();
   scRenderRecent();
   injectAssets();
   applyLanguage();
