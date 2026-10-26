@@ -691,7 +691,7 @@ class BotManager:
             bot.notify_state_change()
 
     async def start_normal(
-        self, channel_ids: list[int] | None = None, delay: float = 5.0
+        self, channel_ids: list[int] | None = None, delay: float = 0.0
     ) -> None:
         """Chế độ thường: chia đều bot vào các voice channel (round-robin).
 
@@ -727,7 +727,7 @@ class BotManager:
                 await asyncio.sleep(delay)
 
     async def start_auto_room(
-        self, lobby_id: int, leader_count: int = 5, delay: float = 5.0
+        self, lobby_id: int, leader_count: int = 5, delay: float = 0.0
     ) -> None:
         """Auto-Room: leader join lobby, đợi bị move, rồi phân phối phần còn lại."""
         total = len(self.tokens)
@@ -828,7 +828,7 @@ class BotManager:
 
         app_logger.info("HOÀN TẤT! Đã phân phối tất cả %d token.", total)
 
-    async def sync_running_bots(self, delay: float = 5.0) -> dict[str, int]:
+    async def sync_running_bots(self, delay: float = 0.0) -> dict[str, int]:
         """Khớp bot đang chạy với danh sách token: token mới thì đăng nhập, token bị xoá thì đăng xuất.
 
         Chỉ làm khi hệ thống đang chạy; token mới vào cùng kênh với các bot hiện có.

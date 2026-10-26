@@ -907,9 +907,7 @@ input.invalid{border-color:var(--red) !important;}
                   <option value="auto_room" data-i18n="opt_auto_room">Auto-Room</option>
                 </select>
               </label>
-              <label><span data-i18n="lbl_delay">Delay between logins (s)</span>
-                <input id="delay-input" type="number" value="5" min="0" step="0.5">
-              </label>
+              <input id="delay-input" type="hidden" value="0">
             </div>
             <p class="hint" id="mode-hint" data-i18n="hint_mode_normal">Tokens are spread evenly across the channels below.</p>
             <div class="control-row">

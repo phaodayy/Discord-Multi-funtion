@@ -33,7 +33,7 @@ class StartBody(BaseModel):
 
     mode: Literal["normal", "auto_room"]
     channel_ids: list[str] = Field(default_factory=list)
-    delay: float = 5.0
+    delay: float = 0.0
     leader_count: int = 5
 
 
