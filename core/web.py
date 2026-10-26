@@ -398,21 +398,26 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .users-toolbar{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap;}
 .users-toolbar input{flex:1;min-width:220px;font-size:13px;padding:8px 12px;}
 .users-toolbar select{font-size:13px;padding:8px 12px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;}
-.users-list{display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow-y:auto;}
-.user-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);}
-.user-row:hover{border-color:var(--border-strong);}
-.user-row .avatar{width:32px;height:32px;flex:0 0 auto;}
-.user-info{flex:1;min-width:0;}
-.user-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.user-sub{font-size:11.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.user-sub .sep{opacity:.5;margin:0 6px;}
-.user-badge{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--text-muted);}
+.users-list{max-height:72vh;overflow:auto;border:1px solid var(--border);border-radius:10px;}
+.users-table{width:100%;border-collapse:collapse;font-size:13px;}
+.users-table thead th{position:sticky;top:0;background:var(--surface);color:var(--text-muted);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);z-index:1;}
+.users-table tbody td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text);}
+.users-table tbody tr:last-child td{border-bottom:none;}
+.users-table tbody tr:hover{background:var(--surface-2);}
+.users-table .col-idx{width:40px;color:var(--text-faint);text-align:right;}
+.users-table .col-ava{width:40px;}
+.users-table .col-ava .avatar{width:28px;height:28px;display:block;}
+.users-table .col-name{min-width:160px;}
+.users-table .col-user{color:var(--text-muted);min-width:140px;}
+.users-table .col-status{width:120px;}
+.users-table .col-voice{min-width:140px;color:var(--text-muted);}
+.users-table .col-act{width:120px;text-align:right;white-space:nowrap;}
+.user-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--text-muted);}
 .user-badge.on{color:var(--green);border-color:var(--green);}
 .user-badge.err{color:var(--red);border-color:var(--red);}
-.user-actions{display:flex;gap:4px;flex:0 0 auto;}
-.user-actions .icon-btn{width:30px;height:30px;}
-.user-actions .icon-btn:hover{color:var(--accent);}
-.user-actions .icon-btn.danger:hover{color:var(--red);}
+.users-table .col-act .icon-btn{width:28px;height:28px;}
+.users-table .col-act .icon-btn:hover{color:var(--accent);}
+.users-table .col-act .icon-btn.danger:hover{color:var(--red);}
 .gx-accounts{display:flex;flex-direction:column;gap:4px;}
 .gx-account{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;}
 .gx-account:hover{border-color:var(--border-strong);}
@@ -1347,6 +1352,7 @@ input.invalid{border-color:var(--red) !important;}
       msg_user_deleted: 'Removed "{n}".',
       users_empty: 'No account matches the filter.',
       users_servers_count: '{n} server(s)',
+      users_col_name: 'Name', users_col_user: 'Username', users_col_status: 'Status', users_col_voice: 'Voice channel',
       cp_builder_title: 'Pick components → add as step',
       cp_clear: 'Clear steps', cp_run: 'Run campaign',
       cp_add: 'Add step',
@@ -1581,6 +1587,7 @@ input.invalid{border-color:var(--red) !important;}
       msg_user_deleted: 'Đã xoá "{n}".',
       users_empty: 'Không có tài khoản nào khớp bộ lọc.',
       users_servers_count: '{n} server',
+      users_col_name: 'Tên', users_col_user: 'Username', users_col_status: 'Trạng thái', users_col_voice: 'Kênh voice',
       cp_builder_title: 'Chọn component → thêm thành một bước',
       cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
       cp_add: 'Thêm bước',
@@ -3418,7 +3425,16 @@ input.invalid{border-color:var(--red) !important;}
       usersListEl.innerHTML = '<div class="pk-empty">' + esc(t('users_empty')) + '</div>';
       return;
     }
-    usersListEl.innerHTML = items.map(function(b){
+    var head = '<thead><tr>'
+      + '<th class="col-idx">#</th>'
+      + '<th class="col-ava"></th>'
+      + '<th class="col-name">' + esc(t('users_col_name') || 'Name') + '</th>'
+      + '<th class="col-user">' + esc(t('users_col_user') || 'Username') + '</th>'
+      + '<th class="col-status">' + esc(t('users_col_status') || 'Status') + '</th>'
+      + '<th class="col-voice">' + esc(t('users_col_voice') || 'Voice') + '</th>'
+      + '<th class="col-act"></th>'
+      + '</tr></thead>';
+    var body = items.map(function(b, i){
       var user = b.user || {};
       var avatar = user.avatar_url
         ? '<img class="avatar" src="' + esc(user.avatar_url) + '" alt="">'
@@ -3428,22 +3444,23 @@ input.invalid{border-color:var(--red) !important;}
       else if (b.is_in_voice) { badge = '<span class="user-badge on">' + esc(t('users_in_voice')) + '</span>'; }
       else if (b.is_ready) { badge = '<span class="user-badge on">' + esc(t('users_online')) + '</span>'; }
       else { badge = '<span class="user-badge">' + esc(t('users_offline')) + '</span>'; }
-      var voiceInfo = b.is_in_voice && b.voice_channel_name
-        ? '<span class="sep">·</span>#' + esc(b.voice_channel_name)
-        : '';
-      return '<div class="user-row" data-user-row="' + esc(b.id) + '">'
-        + avatar
-        + '<div class="user-info">'
-        +   '<div class="user-name">' + esc(user.display_name || user.username || b.id) + ' ' + badge + '</div>'
-        +   '<div class="user-sub">@' + esc(user.username || '') + voiceInfo + '</div>'
-        + '</div>'
-        + '<div class="user-actions">'
+      var voiceCell = b.is_in_voice && b.voice_channel_name ? '#' + esc(b.voice_channel_name) : '—';
+      var displayName = user.display_name || user.username || b.id;
+      return '<tr data-user-row="' + esc(b.id) + '">'
+        + '<td class="col-idx">' + (i + 1) + '</td>'
+        + '<td class="col-ava">' + avatar + '</td>'
+        + '<td class="col-name"><b>' + esc(displayName) + '</b></td>'
+        + '<td class="col-user">@' + esc(user.username || '') + '</td>'
+        + '<td class="col-status">' + badge + '</td>'
+        + '<td class="col-voice">' + voiceCell + '</td>'
+        + '<td class="col-act">'
         +   '<button class="icon-btn" type="button" data-user-rename="' + esc(b.id) + '" title="' + esc(t('btn_rename_one')) + '">' + icon('pencil') + '</button>'
         +   (b.is_in_voice ? '<button class="icon-btn" type="button" data-user-leave="' + esc(b.id) + '" title="' + esc(t('btn_leave_voice')) + '">' + icon('x') + '</button>' : '')
-        +   '<button class="icon-btn danger" type="button" data-user-delete="' + esc(b.id) + '" data-user-name="' + esc(user.display_name || user.username || b.id) + '" title="' + esc(t('users_delete')) + '">' + icon('x') + '</button>'
-        + '</div>'
-        + '</div>';
+        +   '<button class="icon-btn danger" type="button" data-user-delete="' + esc(b.id) + '" data-user-name="' + esc(displayName) + '" title="' + esc(t('users_delete')) + '">' + icon('x') + '</button>'
+        + '</td>'
+        + '</tr>';
     }).join('');
+    usersListEl.innerHTML = '<table class="users-table">' + head + '<tbody>' + body + '</tbody></table>';
   }
   usersFilter.addEventListener('input', renderUsersPage);
   usersStatus.addEventListener('change', renderUsersPage);
