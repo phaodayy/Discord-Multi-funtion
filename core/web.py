@@ -1010,6 +1010,19 @@ input.invalid{border-color:var(--red) !important;}
       <!-- ===== Advanced ===== -->
       <section class="view hidden" data-view="advanced">
         <section class="panel">
+          <div class="panel-head"><h2 data-i18n="ov_title">OAuth Verify (shop/community)</h2></div>
+          <p class="hint" data-i18n="ov_hint">Paste the OAuth URL from the shop's Verify button (right-click button → Copy link). The picked accounts (or all online if none) authorize the app and complete the shop's callback automatically.</p>
+          <div class="control-row">
+            <label class="grow"><span data-i18n="ov_url">OAuth URL</span>
+              <input id="ov-url" type="text" autocomplete="off" placeholder="https://discord.com/oauth2/authorize?client_id=...">
+            </label>
+            <button id="ov-run" class="btn btn-primary" type="button">
+              <span class="ico" data-icon="tick"></span><span data-i18n="ov_run">Verify</span>
+            </button>
+          </div>
+          <div class="hint" id="ov-result" style="margin-top:8px"></div>
+        </section>
+        <section class="panel">
           <div class="panel-head"><h2 data-i18n="js_title">Join a server</h2></div>
           <p class="hint" data-i18n="js_hint">Paste a Discord invite link; the picked accounts (or all online if none) accept it in parallel. Discord may ask for a captcha on new accounts — those will fail with a captcha-required error.</p>
           <div class="control-row">
@@ -1414,6 +1427,11 @@ input.invalid{border-color:var(--red) !important;}
       js_result: '{ok}/{total} accounts joined.',
       js_need_invite: 'Paste an invite link first.',
       js_captcha_warn: 'Captcha-required errors mean Discord wants that account to prove it is human; solve it manually in Discord and try again.',
+      ov_title: 'OAuth Verify',
+      ov_hint: 'Paste the OAuth URL from the shop\'s Verify button (right-click → Copy link). Each picked account authorizes the app and the shop callback is called automatically.',
+      ov_url: 'OAuth URL', ov_run: 'Verify',
+      ov_result: '{ok}/{total} accounts verified.',
+      ov_need_url: 'Paste the OAuth URL first.',
       btn_rename_one: 'Rename this account',
       ph_rename_one: 'New nickname (reset = default)',
       msg_renamed_one: 'Renamed to "{n}".',
@@ -1663,6 +1681,11 @@ input.invalid{border-color:var(--red) !important;}
       js_result: '{ok}/{total} tài khoản vào được.',
       js_need_invite: 'Hãy dán link mời.',
       js_captcha_warn: 'Lỗi captcha nghĩa là Discord bắt tài khoản đó xác minh người thật; mở Discord thường để giải captcha rồi thử lại.',
+      ov_title: 'OAuth Verify',
+      ov_hint: 'Dán URL OAuth từ nút Xác minh của shop (chuột phải vào nút → Copy link). Mỗi acc đã tick (hoặc toàn bộ nếu không tick ai) sẽ tự authorize + gọi callback giúp shop ghi nhận.',
+      ov_url: 'URL OAuth', ov_run: 'Xác minh',
+      ov_result: '{ok}/{total} tài khoản authorize xong.',
+      ov_need_url: 'Hãy dán URL OAuth trước.',
       btn_rename_one: 'Đổi tên tài khoản này',
       ph_rename_one: 'Nickname mới (reset = mặc định)',
       msg_renamed_one: 'Đã đổi tên thành "{n}".',
@@ -3530,6 +3553,29 @@ input.invalid{border-color:var(--red) !important;}
   jsSelectNone.addEventListener('click', function(){ jsPicked = {}; renderJsAccounts(); });
   jsRun.addEventListener('click', runJoinServer);
   jsInvite.addEventListener('keydown', function(e){ if (e.key === 'Enter') { runJoinServer(); } });
+
+  /* ---------- OAuth Verify (Nâng cao) ---------- */
+  var ovUrl = $('ov-url'), ovRun = $('ov-run'), ovResult = $('ov-result');
+  function runOAuthVerify(){
+    var url = ovUrl.value.trim();
+    if (!url) { toast(t('ov_need_url'), 'error'); return; }
+    // Dùng cùng tập acc đã tick ở panel Join server bên dưới
+    var picked = Object.keys(jsPicked);
+    ovRun.disabled = true;
+    ovResult.textContent = '';
+    api('/api/oauth2-verify', 'POST', {oauth_url: url, bot_ids: picked}).then(function(data){
+      ovRun.disabled = false;
+      if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
+      toast(t('ov_result').replace('{ok}', data.success).replace('{total}', data.total),
+            data.success === data.total ? 'success' : 'error');
+      var failed = (data.results || []).filter(function(r){ return !r.ok; });
+      if (failed.length) {
+        ovResult.textContent = failed.map(function(r){ return r.bot_id.slice(-6) + ': ' + (r.error || ''); }).join(' · ');
+      }
+    });
+  }
+  ovRun.addEventListener('click', runOAuthVerify);
+  ovUrl.addEventListener('keydown', function(e){ if (e.key === 'Enter') { runOAuthVerify(); } });
 
   /* ---------- Users: quản lý từng tài khoản ---------- */
   var usersListEl = $('users-list'), usersFilter = $('users-filter'), usersStatus = $('users-status');

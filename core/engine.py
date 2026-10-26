@@ -518,6 +518,30 @@ class Bot(discord.Client):
             self.notify_state_change()
             return False
 
+    async def oauth2_authorize(
+        self,
+        client_id: int,
+        scopes: list[str],
+        redirect_uri: str | None = None,
+        state: str | None = None,
+        response_type: str = "code",
+    ) -> dict[str, Any]:
+        """Authorize OAuth2 app bằng token của chính acc này; trả location có code."""
+        try:
+            res = await self.http.authorize_oauth2(
+                application_id=client_id,
+                scopes=scopes,
+                response_type=response_type,
+                redirect_uri=redirect_uri,
+                state=state,
+            )
+            location = res.get("location") if isinstance(res, dict) else None
+            app_logger.info("Bot %s authorize OAuth client_id=%s", self.user, client_id)
+            return {"ok": True, "location": location}
+        except Exception as exc:
+            app_logger.error("Bot %s OAuth authorize lỗi: %s", self.user, exc)
+            return {"ok": False, "error": str(exc)[:200]}
+
     async def leave_guild(self, guild_id: int) -> bool:
         """Rời server (guild) nhưng vẫn giữ nguyên đăng nhập."""
         try:
@@ -1086,6 +1110,60 @@ class BotManager:
         if bot is None or not bot.is_ready():
             return {"ok": False, "error": "offline"}
         return await bot.edit_profile(**fields)
+
+    async def oauth2_verify(
+        self, bot_ids: list[int | str], oauth_url: str
+    ) -> dict[str, Any]:
+        """Tự authorize OAuth2 cho các acc; dùng khi shop/community có nút Xác minh.
+
+        ``oauth_url`` là URL dán từ nút Xác minh (dạng
+        ``https://discord.com/oauth2/authorize?client_id=...&scope=...&...``).
+        Sau khi authorize, tool tự gọi ``location`` để worker shop nhận code.
+        """
+        import urllib.parse as _urlp
+        import aiohttp
+
+        parsed = _urlp.urlparse(oauth_url)
+        qs = _urlp.parse_qs(parsed.query)
+        try:
+            client_id = int(qs.get("client_id", [None])[0] or 0)
+        except (TypeError, ValueError):
+            client_id = 0
+        if not client_id:
+            return {"success": 0, "total": len(bot_ids), "error": "missing_client_id", "results": []}
+        scope = (qs.get("scope", [""])[0] or "identify").split()
+        redirect_uri = qs.get("redirect_uri", [None])[0]
+        state = qs.get("state", [None])[0]
+        response_type = qs.get("response_type", ["code"])[0]
+
+        async def run_one(bid: int | str) -> dict[str, Any]:
+            bot = self._find_bot(bid)
+            if bot is None or not bot.is_ready():
+                return {"bot_id": str(bid), "ok": False, "error": "offline"}
+            auth = await bot.oauth2_authorize(client_id, scope, redirect_uri, state, response_type)
+            if not auth.get("ok"):
+                return {"bot_id": str(bid), **auth}
+            location = auth.get("location")
+            if not location:
+                return {"bot_id": str(bid), "ok": True, "callback": None}
+            # Gọi callback của worker để nó cấp role
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(location, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                        status = resp.status
+                        text = await resp.text()
+                return {"bot_id": str(bid), "ok": True, "callback_status": status, "callback_snippet": text[:120]}
+            except Exception as exc:
+                return {"bot_id": str(bid), "ok": True, "callback_error": str(exc)[:200]}
+
+        results = await asyncio.gather(*(run_one(bid) for bid in bot_ids))
+        return {
+            "success": sum(1 for r in results if r.get("ok")),
+            "total": len(bot_ids),
+            "client_id": client_id,
+            "scope": scope,
+            "results": list(results),
+        }
 
     async def leave_server(
         self, guild_id: int, bot_ids: list[int | str] | None = None

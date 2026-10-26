@@ -111,6 +111,13 @@ class JoinServerBody(BaseModel):
     bot_ids: list[str] = Field(default_factory=list)
 
 
+class OAuthVerifyBody(BaseModel):
+    """Body cho các acc authorize OAuth2 (ví dụ nút Xác minh của shop)."""
+
+    oauth_url: str
+    bot_ids: list[str] = Field(default_factory=list)
+
+
 class ComponentInteractBody(BaseModel):
     """Body cho tài khoản bấm nút / chọn option trong kênh chỉ đọc."""
 
@@ -356,6 +363,21 @@ async def reaction(body: ReactionBody) -> dict[str, Any]:
     message_id = _parse_int(body.message_id, "message_id")
     reacted = await bot_manager.spam_reaction(channel_id, message_id, body.emoji)
     return {"success": True, "reacted": reacted}
+
+
+@router.post("/oauth2-verify")
+async def oauth2_verify(body: OAuthVerifyBody) -> dict[str, Any]:
+    """Authorize OAuth2 cho các acc; dùng với URL dán từ nút Xác minh của shop/community."""
+    url = (body.oauth_url or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="Thiếu URL OAuth")
+    bot_ids = body.bot_ids
+    if not bot_ids:
+        bot_ids = [bot.bot_id for bot in bot_manager.bots if bot.is_ready()]
+    if not bot_ids:
+        raise HTTPException(status_code=400, detail="Không có tài khoản online nào")
+    result = await bot_manager.oauth2_verify(bot_ids, url)
+    return {"success": True, **result}
 
 
 @router.post("/join-server")
