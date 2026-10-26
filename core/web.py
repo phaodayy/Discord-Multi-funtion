@@ -878,6 +878,24 @@ input.invalid{border-color:var(--red) !important;}
 
       <!-- ===== Advanced ===== -->
       <section class="view hidden" data-view="advanced">
+        <section class="panel">
+          <div class="panel-head"><h2 data-i18n="js_title">Join a server</h2></div>
+          <p class="hint" data-i18n="js_hint">Paste a Discord invite link; the picked accounts (or all online if none) accept it in parallel. Discord may ask for a captcha on new accounts — those will fail with a captcha-required error.</p>
+          <div class="control-row">
+            <label class="grow"><span data-i18n="js_invite">Invite link or code</span>
+              <input id="js-invite" type="text" autocomplete="off" placeholder="discord.gg/xxxx or just xxxx">
+            </label>
+            <button id="js-run" class="btn btn-primary" type="button">
+              <span class="ico" data-icon="plus"></span><span data-i18n="js_run">Join</span>
+            </button>
+          </div>
+          <div id="js-accounts" class="gx-accounts" style="margin-top:10px;max-height:220px;overflow-y:auto"></div>
+          <div class="js-bulk" style="margin-top:8px;display:flex;gap:8px">
+            <button class="btn btn-sm" type="button" id="js-select-all" data-i18n="gx_select_all">Select all</button>
+            <button class="btn btn-sm" type="button" id="js-select-none" data-i18n="gx_select_none">Clear</button>
+            <span class="hint" id="js-hint" style="margin-left:auto"></span>
+          </div>
+        </section>
         <div class="two-col">
           <section class="panel">
             <div class="panel-head"><h2 data-i18n="adv_start_title">Advanced start</h2></div>
@@ -1008,6 +1026,7 @@ input.invalid{border-color:var(--red) !important;}
     x: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
     home: svg('<path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>'),
     cart: svg('<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>'),
+    plus: svg('<path d="M12 5v14M5 12h14"/>'),
     server: svg('<rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/>'),
     wifi: svg('<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" x2="12.01" y1="20" y2="20"/>'),
     volume: svg('<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>'),
@@ -1248,6 +1267,13 @@ input.invalid{border-color:var(--red) !important;}
       cp_status_running: 'Running — loop {n} done',
       cp_status_idle: 'Idle',
       cp_already_running: 'A campaign is already running.',
+      js_title: 'Join a server',
+      js_hint: 'Paste a Discord invite link; the picked accounts (or all online if none) accept it in parallel. Discord may ask for a captcha on new accounts — those will fail with a captcha-required error.',
+      js_invite: 'Invite link or code',
+      js_run: 'Join',
+      js_result: '{ok}/{total} accounts joined.',
+      js_need_invite: 'Paste an invite link first.',
+      js_captcha_warn: 'Captcha-required errors mean Discord wants that account to prove it is human; solve it manually in Discord and try again.'
       cp_builder_title: 'Pick components → add as step',
       cp_clear: 'Clear steps', cp_run: 'Run campaign',
       cp_add: 'Add step',
@@ -1452,6 +1478,13 @@ input.invalid{border-color:var(--red) !important;}
       cp_status_running: 'Đang chạy — xong vòng {n}',
       cp_status_idle: 'Đang nghỉ',
       cp_already_running: 'Đang có một chiến dịch chạy.',
+      js_title: 'Vào server (join)',
+      js_hint: 'Dán link mời Discord; các tài khoản đã tick (hoặc tất cả nếu không tick ai) cùng vào song song. Discord có thể bắt captcha với acc mới — những acc đó sẽ báo lỗi "captcha required".',
+      js_invite: 'Link mời hoặc mã',
+      js_run: 'Vào server',
+      js_result: '{ok}/{total} tài khoản vào được.',
+      js_need_invite: 'Hãy dán link mời.',
+      js_captcha_warn: 'Lỗi captcha nghĩa là Discord bắt tài khoản đó xác minh người thật; mở Discord thường để giải captcha rồi thử lại.'
       cp_builder_title: 'Chọn component → thêm thành một bước',
       cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
       cp_add: 'Thêm bước',
@@ -1595,7 +1628,7 @@ input.invalid{border-color:var(--red) !important;}
     if (name === 'messages' && token) { renderMessagesPage(); }
     if (name === 'picker' && token) { renderPickerPage(); }
     if (name === 'campaign' && token) { renderCampaignPage(); }
-    if (name === 'advanced') { logConsole.scrollTop = logConsole.scrollHeight; }
+    if (name === 'advanced') { logConsole.scrollTop = logConsole.scrollHeight; renderJsAccounts(); }
     window.scrollTo(0, 0);
   }
   document.addEventListener('click', function(event){
@@ -1811,6 +1844,7 @@ input.invalid{border-color:var(--red) !important;}
     if (currentView === 'messages') { renderMessagesPage(); }
     if (currentView === 'picker') { renderPickerPage(); }
     if (currentView === 'campaign') { renderCampaignPage(); }
+    if (currentView === 'advanced') { renderJsAccounts(); }
   }
   function statusOf(bot){
     if (bot.error) { return {label: t('status_error'), cls: 'badge-error'}; }
@@ -3140,6 +3174,70 @@ input.invalid{border-color:var(--red) !important;}
     renderCpSteps();
     toast(t('cp_loaded').replace('{name}', name), 'success');
   });
+  /* ---------- Join server qua link mời (trang Nâng cao) ---------- */
+  var jsInvite = $('js-invite'), jsRun = $('js-run'), jsAccountsEl = $('js-accounts');
+  var jsSelectAll = $('js-select-all'), jsSelectNone = $('js-select-none'), jsHint = $('js-hint');
+  var jsPicked = {};
+
+  function renderJsAccounts(){
+    var bots = (lastSummary && lastSummary.bots) || [];
+    var ready = bots.filter(function(b){ return (b.state || '').indexOf('ready') >= 0 || b.user; });
+    // Dọn pick cũ nếu tài khoản không còn
+    var validIds = {};
+    ready.forEach(function(b){ validIds[b.id] = true; });
+    Object.keys(jsPicked).forEach(function(id){ if (!validIds[id]) { delete jsPicked[id]; } });
+    if (!ready.length) {
+      jsAccountsEl.innerHTML = '<div class="muted">' + esc(t('gx_no_accounts')) + '</div>';
+      return;
+    }
+    jsAccountsEl.innerHTML = ready.map(function(b){
+      var user = b.user || {};
+      var checked = !!jsPicked[b.id];
+      var avatar = user.avatar_url
+        ? '<img class="avatar" src="' + esc(user.avatar_url) + '" alt="">'
+        : '<span class="avatar avatar-fallback">' + icon('user') + '</span>';
+      return '<button class="gx-account' + (checked ? ' checked' : '') + '" type="button" role="checkbox" aria-checked="' + checked + '" data-js-account="' + esc(b.id) + '">'
+        + '<span class="gx-check">' + (checked ? icon('tick') : '') + '</span>' + avatar
+        + '<div class="gx-acc-info"><div class="gx-acc-name">' + esc(user.display_name || user.username || b.id) + '</div>'
+        + '<div class="gx-acc-sub">@' + esc(user.username || '') + '</div></div></button>';
+    }).join('');
+  }
+  function runJoinServer(){
+    var invite = jsInvite.value.trim();
+    if (!invite) { toast(t('js_need_invite'), 'error'); return; }
+    var picked = Object.keys(jsPicked);
+    jsRun.disabled = true;
+    api('/api/join-server', 'POST', {invite: invite, bot_ids: picked}).then(function(data){
+      jsRun.disabled = false;
+      if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
+      toast(t('js_result').replace('{ok}', data.success).replace('{total}', data.total),
+            data.success === data.total ? 'success' : 'error');
+      // Hiện lỗi của từng acc để biết acc nào bị captcha
+      var failed = (data.results || []).filter(function(r){ return !r.ok; });
+      if (failed.length) {
+        jsHint.textContent = failed.map(function(r){ return r.bot_id.slice(-6) + ': ' + (r.error || ''); }).join(' · ');
+      } else {
+        jsHint.textContent = '';
+      }
+      refreshStatus();
+    });
+  }
+  jsAccountsEl.addEventListener('click', function(event){
+    var item = event.target.closest('[data-js-account]');
+    if (!item) { return; }
+    var id = item.getAttribute('data-js-account');
+    if (jsPicked[id]) { delete jsPicked[id]; } else { jsPicked[id] = true; }
+    renderJsAccounts();
+  });
+  jsSelectAll.addEventListener('click', function(){
+    var bots = (lastSummary && lastSummary.bots) || [];
+    bots.forEach(function(b){ jsPicked[b.id] = true; });
+    renderJsAccounts();
+  });
+  jsSelectNone.addEventListener('click', function(){ jsPicked = {}; renderJsAccounts(); });
+  jsRun.addEventListener('click', runJoinServer);
+  jsInvite.addEventListener('keydown', function(e){ if (e.key === 'Enter') { runJoinServer(); } });
+
   cpDelete.addEventListener('click', function(){
     var name = cpName.value.trim() || cpLoad.value;
     if (!name) { return; }

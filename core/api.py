@@ -91,6 +91,13 @@ class ChatAllBody(BaseModel):
     delay: float = 1.0
 
 
+class JoinServerBody(BaseModel):
+    """Body cho các tài khoản vào server qua link mời."""
+
+    invite: str
+    bot_ids: list[str] = Field(default_factory=list)
+
+
 class ComponentInteractBody(BaseModel):
     """Body cho tài khoản bấm nút / chọn option trong kênh chỉ đọc."""
 
@@ -314,6 +321,22 @@ async def reaction(body: ReactionBody) -> dict[str, Any]:
     message_id = _parse_int(body.message_id, "message_id")
     reacted = await bot_manager.spam_reaction(channel_id, message_id, body.emoji)
     return {"success": True, "reacted": reacted}
+
+
+@router.post("/join-server")
+async def join_server(body: JoinServerBody) -> dict[str, Any]:
+    """Dán link mời; các tài khoản chỉ định cùng vào server."""
+    invite = (body.invite or "").strip()
+    if not invite:
+        raise HTTPException(status_code=400, detail="Thiếu link mời")
+    bot_ids = body.bot_ids
+    if not bot_ids:
+        # Mặc định: tất cả tài khoản đang online
+        bot_ids = [bot.bot_id for bot in bot_manager.bots if bot.is_ready()]
+    if not bot_ids:
+        raise HTTPException(status_code=400, detail="Không có tài khoản online nào")
+    result = await bot_manager.join_server(bot_ids, invite)
+    return {"success": True, **result}
 
 
 @router.get("/bots/{bot_id}/readonly-channels")

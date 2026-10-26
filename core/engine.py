@@ -1486,6 +1486,55 @@ class BotManager:
                 await asyncio.sleep(wait_between)
         return step_results
 
+    async def join_server(
+        self, bot_ids: list[int | str], invite: str
+    ) -> dict[str, Any]:
+        """Dán link mời / mã mời → các tài khoản chỉ định cùng vào server (song song)."""
+        code = (invite or "").strip()
+        if not code:
+            return {"success": 0, "total": 0, "results": []}
+        # Tách code từ link discord.gg/xxx hoặc discord.com/invite/xxx
+        for prefix in ("discord.gg/", "discord.com/invite/", "discordapp.com/invite/"):
+            idx = code.lower().find(prefix)
+            if idx >= 0:
+                code = code[idx + len(prefix) :]
+                break
+        code = code.split("?")[0].split("/")[0].strip()
+
+        async def run_one(bid: int | str) -> dict[str, Any]:
+            bot = self._find_bot(bid)
+            if bot is None or not bot.is_ready():
+                return {"bot_id": str(bid), "ok": False, "error": "offline"}
+            try:
+                invite_obj = await bot.accept_invite(code)
+                guild = getattr(invite_obj, "guild", None)
+                app_logger.info(
+                    "Bot %s đã vào server %s qua mã mời %s",
+                    bot.user, getattr(guild, "name", "?"), code,
+                )
+                return {
+                    "bot_id": str(bid),
+                    "ok": True,
+                    "guild_id": str(guild.id) if guild else None,
+                    "guild_name": getattr(guild, "name", None),
+                }
+            except discord.HTTPException as exc:
+                # Discord thường bắt captcha hoặc chặn khi tự động vào server
+                msg = str(exc)
+                app_logger.warning("Bot %s không vào được server (%s): %s", bot.user, code, msg)
+                return {"bot_id": str(bid), "ok": False, "error": msg[:200]}
+            except Exception as exc:
+                app_logger.error("Bot %s join server lỗi: %s", bid, exc)
+                return {"bot_id": str(bid), "ok": False, "error": str(exc)[:200]}
+
+        results = await asyncio.gather(*(run_one(bid) for bid in bot_ids))
+        return {
+            "success": sum(1 for r in results if r.get("ok")),
+            "total": len(bot_ids),
+            "results": list(results),
+            "code": code,
+        }
+
     async def run_campaign(
         self,
         bot_ids: list[int | str],
