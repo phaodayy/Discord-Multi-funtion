@@ -449,6 +449,15 @@ async def get_tokens() -> dict[str, Any]:
     }
 
 
+@router.delete("/tokens/{bot_id}")
+async def delete_token(bot_id: str) -> dict[str, Any]:
+    """Xoá một tài khoản (dừng bot + bỏ token khỏi file)."""
+    ok = await bot_manager.delete_token(bot_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản")
+    return {"success": True, "count": len(bot_manager.tokens)}
+
+
 @router.put("/tokens")
 async def update_tokens(body: TokensBody) -> dict[str, Any]:
     """Lưu danh sách token mới vào file."""

@@ -667,6 +667,30 @@ class BotManager:
         self.tokens = [line.strip() for line in lines if line.strip()]
         app_logger.info("Đã nạp %d token từ %s", len(self.tokens), path)
 
+    async def delete_token(self, bot_id: int | str) -> bool:
+        """Xoá token của một tài khoản: dừng bot, bỏ token khỏi file."""
+        bot = self._find_bot(bot_id)
+        token_to_remove = bot.token_str if bot else None
+        if bot is not None:
+            try:
+                await bot.close()
+            except Exception as exc:
+                app_logger.warning("Không đóng được bot %s: %s", bot_id, exc)
+            if bot in self.bots:
+                self.bots.remove(bot)
+        if token_to_remove is None:
+            # Có thể bot_id là chính token hoặc đoạn token
+            key = str(bot_id)
+            token_to_remove = next((t for t in self.tokens if t == key or t.startswith(key.rstrip(".")[:6])), None)
+        if token_to_remove is None:
+            return False
+        new_tokens = [t for t in self.tokens if t != token_to_remove]
+        if len(new_tokens) == len(self.tokens):
+            return False
+        self.save_tokens(new_tokens)
+        self._dispatch_state({"bot_id": str(bot_id), "state": "removed"})
+        return True
+
     def save_tokens(self, tokens: list[str]) -> None:
         """Ghi danh sách token vào file và cập nhật bộ nhớ."""
         cleaned = [token.strip() for token in tokens if token.strip()]

@@ -395,6 +395,24 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .cp-timing input{width:140px;font-size:13px;padding:6px 10px;}
 .cp-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
 .cp-empty{color:var(--text-muted);font-size:13px;padding:12px;border:1px dashed var(--border);border-radius:8px;text-align:center;}
+.users-toolbar{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap;}
+.users-toolbar input{flex:1;min-width:220px;font-size:13px;padding:8px 12px;}
+.users-toolbar select{font-size:13px;padding:8px 12px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;}
+.users-list{display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow-y:auto;}
+.user-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);}
+.user-row:hover{border-color:var(--border-strong);}
+.user-row .avatar{width:32px;height:32px;flex:0 0 auto;}
+.user-info{flex:1;min-width:0;}
+.user-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.user-sub{font-size:11.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.user-sub .sep{opacity:.5;margin:0 6px;}
+.user-badge{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--text-muted);}
+.user-badge.on{color:var(--green);border-color:var(--green);}
+.user-badge.err{color:var(--red);border-color:var(--red);}
+.user-actions{display:flex;gap:4px;flex:0 0 auto;}
+.user-actions .icon-btn{width:30px;height:30px;}
+.user-actions .icon-btn:hover{color:var(--accent);}
+.user-actions .icon-btn.danger:hover{color:var(--red);}
 .gx-accounts{display:flex;flex-direction:column;gap:4px;}
 .gx-account{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;}
 .gx-account:hover{border-color:var(--border-strong);}
@@ -570,6 +588,10 @@ input.invalid{border-color:var(--red) !important;}
         </button>
         <button class="nav-item" type="button" data-view="campaign">
           <span class="ico" data-icon="play"></span><span data-i18n="nav_campaign">Campaign</span>
+        </button>
+        <button class="nav-item" type="button" data-view="users">
+          <span class="ico" data-icon="user"></span><span data-i18n="nav_users">Users</span>
+          <span class="nav-badge" id="nav-user-count">0</span>
         </button>
         <button class="nav-item" type="button" data-view="tokens">
           <span class="ico" data-icon="key"></span><span data-i18n="nav_tokens">Tokens</span>
@@ -864,6 +886,26 @@ input.invalid{border-color:var(--red) !important;}
               </div>
             </div>
           </div>
+        </section>
+      </section>
+
+      <!-- ===== Users — quản lý từng tài khoản ===== -->
+      <section class="view hidden" data-view="users">
+        <section class="panel">
+          <div class="panel-head">
+            <h2 data-i18n="users_title">All accounts</h2>
+            <span class="count" id="users-count">0</span>
+          </div>
+          <div class="users-toolbar">
+            <input id="users-filter" type="text" autocomplete="off" data-i18n-ph="users_filter_ph" placeholder="Filter by name / username / token...">
+            <select id="users-status">
+              <option value="all" data-i18n="users_f_all">All</option>
+              <option value="online" data-i18n="users_f_online">Online</option>
+              <option value="offline" data-i18n="users_f_offline">Offline / Error</option>
+              <option value="in_voice" data-i18n="users_f_in_voice">In voice</option>
+            </select>
+          </div>
+          <div id="users-list" class="users-list"></div>
         </section>
       </section>
 
@@ -1291,6 +1333,20 @@ input.invalid{border-color:var(--red) !important;}
       btn_leave_server: 'Leave server',
       confirm_leave_server: 'All picked accounts (or every account that is a member of {s} if none picked) will LEAVE this server. This is not reversible — they must re-join via invite. Continue?',
       msg_left_server: '{n}/{t} account(s) left {s}.',
+      nav_users: 'Users',
+      users_title: 'All accounts',
+      users_filter_ph: 'Filter by name / username / token...',
+      users_f_all: 'All', users_f_online: 'Online', users_f_offline: 'Offline / Error', users_f_in_voice: 'In voice',
+      users_in_voice: 'in voice',
+      users_offline: 'offline',
+      users_online: 'online',
+      users_copy_token: 'Copy token',
+      users_copied: 'Token copied.',
+      users_delete: 'Delete this account (remove token)',
+      confirm_delete_user: 'Remove token for "{n}"? The account logs out and the token is deleted from tokens.txt.',
+      msg_user_deleted: 'Removed "{n}".',
+      users_empty: 'No account matches the filter.',
+      users_servers_count: '{n} server(s)',
       cp_builder_title: 'Pick components → add as step',
       cp_clear: 'Clear steps', cp_run: 'Run campaign',
       cp_add: 'Add step',
@@ -1511,6 +1567,20 @@ input.invalid{border-color:var(--red) !important;}
       btn_leave_server: 'Rời server',
       confirm_leave_server: 'Các tài khoản đã tick (hoặc TẤT CẢ acc đang ở trong {s} nếu không tick ai) sẽ RỜI server này. Không thể hoàn tác — muốn vào lại phải có link mời. Tiếp tục?',
       msg_left_server: 'Đã cho {n}/{t} tài khoản rời khỏi {s}.',
+      nav_users: 'Tài khoản',
+      users_title: 'Toàn bộ tài khoản',
+      users_filter_ph: 'Lọc theo tên / username / token...',
+      users_f_all: 'Tất cả', users_f_online: 'Online', users_f_offline: 'Offline / lỗi', users_f_in_voice: 'Đang trong voice',
+      users_in_voice: 'đang trong voice',
+      users_offline: 'offline',
+      users_online: 'online',
+      users_copy_token: 'Copy token',
+      users_copied: 'Đã copy token.',
+      users_delete: 'Xoá tài khoản này (xoá token)',
+      confirm_delete_user: 'Xoá token của "{n}"? Tài khoản sẽ bị đăng xuất và token bị xoá khỏi tokens.txt.',
+      msg_user_deleted: 'Đã xoá "{n}".',
+      users_empty: 'Không có tài khoản nào khớp bộ lọc.',
+      users_servers_count: '{n} server',
       cp_builder_title: 'Chọn component → thêm thành một bước',
       cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
       cp_add: 'Thêm bước',
@@ -1572,7 +1642,7 @@ input.invalid{border-color:var(--red) !important;}
   var TOKEN_KEY = 'mgl_dashboard_token';
   var CHAT_CHANNEL_KEY = 'mgl_chat_channel';
   var VIEW_KEY = 'mgl_view';
-  var VIEWS = ['voice', 'messages', 'picker', 'campaign', 'tokens', 'advanced'];
+  var VIEWS = ['voice', 'messages', 'picker', 'campaign', 'users', 'tokens', 'advanced'];
   var currentView = VIEWS.indexOf(localStorage.getItem(VIEW_KEY)) >= 0 ? localStorage.getItem(VIEW_KEY) : 'voice';
   var token = localStorage.getItem(TOKEN_KEY) || '';
   var ws = null, wsRetryTimer = null, authFailed = false;
@@ -1654,6 +1724,7 @@ input.invalid{border-color:var(--red) !important;}
     if (name === 'messages' && token) { renderMessagesPage(); }
     if (name === 'picker' && token) { renderPickerPage(); }
     if (name === 'campaign' && token) { renderCampaignPage(); }
+    if (name === 'users' && token) { renderUsersPage(); }
     if (name === 'advanced') { logConsole.scrollTop = logConsole.scrollHeight; renderJsAccounts(); }
     window.scrollTo(0, 0);
   }
@@ -1870,6 +1941,7 @@ input.invalid{border-color:var(--red) !important;}
     if (currentView === 'messages') { renderMessagesPage(); }
     if (currentView === 'picker') { renderPickerPage(); }
     if (currentView === 'campaign') { renderCampaignPage(); }
+    if (currentView === 'users') { renderUsersPage(); }
     if (currentView === 'advanced') { renderJsAccounts(); }
   }
   function statusOf(bot){
@@ -3317,6 +3389,106 @@ input.invalid{border-color:var(--red) !important;}
   jsSelectNone.addEventListener('click', function(){ jsPicked = {}; renderJsAccounts(); });
   jsRun.addEventListener('click', runJoinServer);
   jsInvite.addEventListener('keydown', function(e){ if (e.key === 'Enter') { runJoinServer(); } });
+
+  /* ---------- Users: quản lý từng tài khoản ---------- */
+  var usersListEl = $('users-list'), usersFilter = $('users-filter'), usersStatus = $('users-status');
+  var usersCountEl = $('users-count'), navUserCount = $('nav-user-count');
+
+  function userServersCount(bot){
+    // Tính số server bot đang ở trong (dựa trên get_guilds — lấy đếm nhanh từ lastSummary nếu có)
+    return bot.guild_count || 0;
+  }
+  function renderUsersPage(){
+    var bots = (lastSummary && lastSummary.bots) || [];
+    navUserCount.textContent = bots.length;
+    navUserCount.classList.toggle('empty-badge', bots.length === 0);
+    usersCountEl.textContent = bots.length;
+    var query = usersFilter.value.trim().toLowerCase();
+    var filter = usersStatus.value;
+    var items = bots.filter(function(b){
+      var user = b.user || {};
+      var hay = (user.display_name || '') + ' ' + (user.username || '') + ' ' + (b.id || '');
+      if (query && hay.toLowerCase().indexOf(query) < 0) { return false; }
+      if (filter === 'online' && !b.is_ready) { return false; }
+      if (filter === 'offline' && b.is_ready && !b.error) { return false; }
+      if (filter === 'in_voice' && !b.is_in_voice) { return false; }
+      return true;
+    });
+    if (!items.length) {
+      usersListEl.innerHTML = '<div class="pk-empty">' + esc(t('users_empty')) + '</div>';
+      return;
+    }
+    usersListEl.innerHTML = items.map(function(b){
+      var user = b.user || {};
+      var avatar = user.avatar_url
+        ? '<img class="avatar" src="' + esc(user.avatar_url) + '" alt="">'
+        : '<span class="avatar avatar-fallback">' + icon('user') + '</span>';
+      var badge;
+      if (b.error) { badge = '<span class="user-badge err" title="' + esc(b.error) + '">' + esc(t('status_error') || 'error') + '</span>'; }
+      else if (b.is_in_voice) { badge = '<span class="user-badge on">' + esc(t('users_in_voice')) + '</span>'; }
+      else if (b.is_ready) { badge = '<span class="user-badge on">' + esc(t('users_online')) + '</span>'; }
+      else { badge = '<span class="user-badge">' + esc(t('users_offline')) + '</span>'; }
+      var voiceInfo = b.is_in_voice && b.voice_channel_name
+        ? '<span class="sep">·</span>#' + esc(b.voice_channel_name)
+        : '';
+      return '<div class="user-row" data-user-row="' + esc(b.id) + '">'
+        + avatar
+        + '<div class="user-info">'
+        +   '<div class="user-name">' + esc(user.display_name || user.username || b.id) + ' ' + badge + '</div>'
+        +   '<div class="user-sub">@' + esc(user.username || '') + voiceInfo + '</div>'
+        + '</div>'
+        + '<div class="user-actions">'
+        +   '<button class="icon-btn" type="button" data-user-rename="' + esc(b.id) + '" title="' + esc(t('btn_rename_one')) + '">' + icon('pencil') + '</button>'
+        +   (b.is_in_voice ? '<button class="icon-btn" type="button" data-user-leave="' + esc(b.id) + '" title="' + esc(t('btn_leave_voice')) + '">' + icon('x') + '</button>' : '')
+        +   '<button class="icon-btn danger" type="button" data-user-delete="' + esc(b.id) + '" data-user-name="' + esc(user.display_name || user.username || b.id) + '" title="' + esc(t('users_delete')) + '">' + icon('x') + '</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  usersFilter.addEventListener('input', renderUsersPage);
+  usersStatus.addEventListener('change', renderUsersPage);
+  usersListEl.addEventListener('click', function(event){
+    var ren = event.target.closest('[data-user-rename]');
+    if (ren) {
+      var bid = ren.getAttribute('data-user-rename');
+      var bot = botById(bid) || {}; var user = bot.user || {};
+      var current = user.display_name || user.username || '';
+      var newName = window.prompt(t('ph_rename_one'), current);
+      if (newName === null) { return; }
+      newName = newName.trim();
+      if (!newName) { return; }
+      api('/api/rename', 'POST', {bot_id: bid, name: newName}).then(function(data){
+        if (data && data.affected) {
+          toast(t('msg_renamed_one').replace('{n}', newName), 'success');
+          refreshStatus();
+        } else { toast(t('err_request_failed'), 'error'); }
+      });
+      return;
+    }
+    var leave = event.target.closest('[data-user-leave]');
+    if (leave) {
+      var lid = leave.getAttribute('data-user-leave');
+      api('/api/leave-voice', 'POST', {bot_ids: [lid]}).then(function(data){
+        if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
+        toast(t('msg_left_voice').replace('{n}', data.left || 0), 'success');
+        refreshStatus();
+      });
+      return;
+    }
+    var del = event.target.closest('[data-user-delete]');
+    if (del) {
+      var did = del.getAttribute('data-user-delete');
+      var dname = del.getAttribute('data-user-name') || did;
+      askConfirm(null, t('confirm_delete_user').replace('{n}', dname)).then(function(ok){
+        if (!ok) { return; }
+        api('/api/tokens/' + encodeURIComponent(did), 'DELETE').then(function(data){
+          if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
+          toast(t('msg_user_deleted').replace('{n}', dname), 'success');
+          refreshStatus();
+        });
+      });
+    }
+  });
 
   cpDelete.addEventListener('click', function(){
     var name = cpName.value.trim() || cpLoad.value;
