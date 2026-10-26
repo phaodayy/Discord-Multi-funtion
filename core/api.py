@@ -6,7 +6,7 @@ import asyncio
 import secrets
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -447,6 +447,51 @@ async def get_tokens() -> dict[str, Any]:
             for index, token in enumerate(tokens)
         ],
     }
+
+
+@router.post("/profile/{bot_id}")
+async def edit_profile(
+    bot_id: str,
+    display_name: str | None = Form(default=None),
+    bio: str | None = Form(default=None),
+    accent_color: str | None = Form(default=None),
+    avatar_clear: str | None = Form(default=None),
+    banner_clear: str | None = Form(default=None),
+    avatar: UploadFile | None = None,
+    banner: UploadFile | None = None,
+) -> dict[str, Any]:
+    """Sửa profile tài khoản (display_name/bio/accent_color/avatar/banner).
+
+    Dạng multipart/form-data; mọi trường tuỳ chọn.
+    """
+    fields: dict[str, Any] = {}
+    if display_name is not None:
+        fields["display_name"] = display_name.strip() or None
+    if bio is not None:
+        fields["bio"] = bio
+    if accent_color:
+        try:
+            value = int(accent_color.lstrip("#"), 16)
+            fields["accent_color"] = value
+        except ValueError:
+            raise HTTPException(status_code=400, detail="accent_color không hợp lệ")
+    if avatar_clear == "1":
+        fields["avatar_clear"] = True
+    elif avatar is not None:
+        data = await avatar.read()
+        if data:
+            fields["avatar_bytes"] = data
+    if banner_clear == "1":
+        fields["banner_clear"] = True
+    elif banner is not None:
+        data = await banner.read()
+        if data:
+            fields["banner_bytes"] = data
+
+    result = await bot_manager.edit_profile(bot_id, **fields)
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error") or "edit_failed")
+    return {"success": True, **result}
 
 
 @router.delete("/tokens/{bot_id}")

@@ -553,6 +553,49 @@ class Bot(discord.Client):
             self.notify_state_change()
             return False
 
+    async def edit_profile(
+        self,
+        display_name: str | None = None,
+        bio: str | None = None,
+        accent_color: int | None = None,
+        avatar_bytes: bytes | None = None,
+        avatar_clear: bool = False,
+        banner_bytes: bytes | None = None,
+        banner_clear: bool = False,
+    ) -> dict[str, Any]:
+        """Sửa profile toàn cục: display_name / bio / accent / avatar / banner."""
+        changes: dict[str, Any] = {}
+        if display_name is not None:
+            changes["global_name"] = display_name or None
+        if bio is not None:
+            changes["bio"] = bio
+        if accent_color is not None:
+            try:
+                changes["accent_colour"] = discord.Colour(int(accent_color))
+            except Exception as exc:
+                raise ValueError(f"accent_color không hợp lệ: {exc}") from exc
+        if avatar_clear:
+            changes["avatar"] = None
+        elif avatar_bytes is not None:
+            changes["avatar"] = avatar_bytes
+        if banner_clear:
+            changes["banner"] = None
+        elif banner_bytes is not None:
+            changes["banner"] = banner_bytes
+        if not changes:
+            return {"ok": True, "changed": []}
+        try:
+            await self.user.edit(**changes)
+            self.error = None
+            app_logger.info("Đã sửa profile %s: %s", self.user, list(changes.keys()))
+            self.notify_state_change()
+            return {"ok": True, "changed": list(changes.keys())}
+        except Exception as exc:
+            self.error = str(exc)
+            app_logger.error("Sửa profile thất bại cho %s: %s", self.user, exc)
+            self.notify_state_change()
+            return {"ok": False, "error": str(exc)[:300]}
+
     async def rename(self, new_nick: str | None) -> bool:
         """Đổi display name toàn cục của tài khoản; ``None`` hoặc ``"reset"`` để xoá."""
         if new_nick is None or new_nick.lower() == "reset":
@@ -1038,6 +1081,13 @@ class BotManager:
             app_logger.warning("Không tìm thấy bot: %s", bot_id)
             return False
         return await bot.rename(name)
+
+    async def edit_profile(self, bot_id: int | str, **fields: Any) -> dict[str, Any]:
+        """Sửa profile của một bot (display_name, bio, accent_color, avatar, banner)."""
+        bot = self._find_bot(bot_id)
+        if bot is None or not bot.is_ready():
+            return {"ok": False, "error": "offline"}
+        return await bot.edit_profile(**fields)
 
     async def leave_server(
         self, guild_id: int, bot_ids: list[int | str] | None = None

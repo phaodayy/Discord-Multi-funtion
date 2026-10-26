@@ -418,6 +418,21 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .users-table .col-act .icon-btn{width:28px;height:28px;}
 .users-table .col-act .icon-btn:hover{color:var(--accent);}
 .users-table .col-act .icon-btn.danger:hover{color:var(--red);}
+.profile-modal{max-width:720px;width:100%;}
+.pf-grid{display:grid;grid-template-columns:200px 1fr;gap:16px;margin:12px 0;}
+.pf-side{display:flex;flex-direction:column;gap:14px;}
+.pf-main{display:flex;flex-direction:column;gap:12px;min-width:0;}
+.pf-upload{display:flex;flex-direction:column;gap:6px;}
+.pf-upload > span{font-size:12px;color:var(--text-muted);font-weight:600;}
+.pf-preview{width:100%;height:120px;border-radius:10px;background:var(--surface-2) center/cover no-repeat;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:11px;}
+.pf-preview.banner{height:70px;}
+.pf-upload input[type=file]{font-size:12px;}
+.pf-upload-actions{display:flex;gap:6px;}
+.pf-main input[type=text], .pf-main textarea{width:100%;font-size:13px;padding:8px 11px;}
+.pf-main textarea{resize:vertical;min-height:76px;}
+.pf-color-row{display:flex;align-items:center;gap:10px;}
+.pf-color-row input[type=color]{width:50px;height:32px;border:1px solid var(--border);background:transparent;border-radius:6px;cursor:pointer;}
+@media (max-width:620px){ .pf-grid{grid-template-columns:1fr;} }
 .gx-accounts{display:flex;flex-direction:column;gap:4px;}
 .gx-account{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;}
 .gx-account:hover{border-color:var(--border-strong);}
@@ -548,6 +563,52 @@ input.invalid{border-color:var(--red) !important;}
     <div class="modal-actions">
       <button id="confirm-cancel" class="btn" type="button">Cancel</button>
       <button id="confirm-ok" class="btn btn-danger" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="profile-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="pf-title">
+  <div class="modal profile-modal">
+    <h3 id="pf-title" data-i18n="pf_title">Edit profile</h3>
+    <div class="pf-grid">
+      <div class="pf-side">
+        <label class="pf-upload">
+          <span data-i18n="pf_avatar">Avatar</span>
+          <div class="pf-preview" id="pf-avatar-preview"></div>
+          <input type="file" id="pf-avatar" accept="image/*">
+          <div class="pf-upload-actions">
+            <button type="button" class="btn btn-sm" id="pf-avatar-clear" data-i18n="pf_clear">Remove</button>
+          </div>
+        </label>
+        <label class="pf-upload">
+          <span data-i18n="pf_banner">Banner</span>
+          <div class="pf-preview banner" id="pf-banner-preview"></div>
+          <input type="file" id="pf-banner" accept="image/*">
+          <div class="pf-upload-actions">
+            <button type="button" class="btn btn-sm" id="pf-banner-clear" data-i18n="pf_clear">Remove</button>
+          </div>
+        </label>
+      </div>
+      <div class="pf-main">
+        <label><span data-i18n="pf_display_name">Display name</span>
+          <input type="text" id="pf-name" maxlength="32" autocomplete="off">
+        </label>
+        <label><span data-i18n="pf_bio">Bio</span>
+          <textarea id="pf-bio" rows="4" maxlength="190"></textarea>
+          <span class="hint" id="pf-bio-count">0/190</span>
+        </label>
+        <label><span data-i18n="pf_accent">Accent color</span>
+          <div class="pf-color-row">
+            <input type="color" id="pf-color" value="#7289da">
+            <button type="button" class="btn btn-sm" id="pf-color-clear" data-i18n="pf_clear">Clear</button>
+          </div>
+        </label>
+      </div>
+    </div>
+    <p class="hint" id="pf-error" style="color:var(--red);display:none"></p>
+    <div class="modal-actions">
+      <button id="pf-cancel" class="btn" type="button" data-i18n="btn_cancel">Cancel</button>
+      <button id="pf-save" class="btn btn-primary" type="button" data-i18n="pf_save">Save</button>
     </div>
   </div>
 </div>
@@ -1353,6 +1414,10 @@ input.invalid{border-color:var(--red) !important;}
       users_empty: 'No account matches the filter.',
       users_servers_count: '{n} server(s)',
       users_col_name: 'Name', users_col_user: 'Username', users_col_status: 'Status', users_col_voice: 'Voice channel',
+      pf_title: 'Edit profile', pf_avatar: 'Avatar', pf_banner: 'Banner', pf_display_name: 'Display name',
+      pf_bio: 'Bio', pf_accent: 'Accent color', pf_clear: 'Remove', pf_save: 'Save',
+      pf_saved: 'Profile updated.',
+      pf_offline: 'Account is offline; log it in before editing the profile.',
       cp_builder_title: 'Pick components → add as step',
       cp_clear: 'Clear steps', cp_run: 'Run campaign',
       cp_add: 'Add step',
@@ -1588,6 +1653,10 @@ input.invalid{border-color:var(--red) !important;}
       users_empty: 'Không có tài khoản nào khớp bộ lọc.',
       users_servers_count: '{n} server',
       users_col_name: 'Tên', users_col_user: 'Username', users_col_status: 'Trạng thái', users_col_voice: 'Kênh voice',
+      pf_title: 'Sửa thông tin', pf_avatar: 'Ảnh đại diện', pf_banner: 'Banner', pf_display_name: 'Tên hiển thị',
+      pf_bio: 'Giới thiệu (bio)', pf_accent: 'Màu chủ đạo', pf_clear: 'Xoá', pf_save: 'Lưu',
+      pf_saved: 'Đã cập nhật profile.',
+      pf_offline: 'Tài khoản đang offline; hãy đăng nhập trước khi sửa profile.',
       cp_builder_title: 'Chọn component → thêm thành một bước',
       cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
       cp_add: 'Thêm bước',
@@ -3467,19 +3536,7 @@ input.invalid{border-color:var(--red) !important;}
   usersListEl.addEventListener('click', function(event){
     var ren = event.target.closest('[data-user-rename]');
     if (ren) {
-      var bid = ren.getAttribute('data-user-rename');
-      var bot = botById(bid) || {}; var user = bot.user || {};
-      var current = user.display_name || user.username || '';
-      var newName = window.prompt(t('ph_rename_one'), current);
-      if (newName === null) { return; }
-      newName = newName.trim();
-      if (!newName) { return; }
-      api('/api/rename', 'POST', {bot_id: bid, name: newName}).then(function(data){
-        if (data && data.affected) {
-          toast(t('msg_renamed_one').replace('{n}', newName), 'success');
-          refreshStatus();
-        } else { toast(t('err_request_failed'), 'error'); }
-      });
+      openProfileModal(ren.getAttribute('data-user-rename'));
       return;
     }
     var leave = event.target.closest('[data-user-leave]');
@@ -3505,6 +3562,102 @@ input.invalid{border-color:var(--red) !important;}
         });
       });
     }
+  });
+
+  /* ---------- Profile modal: avatar, banner, bio, màu, tên ---------- */
+  var pfModal = $('profile-modal'), pfTitle = $('pf-title'), pfErr = $('pf-error');
+  var pfName = $('pf-name'), pfBio = $('pf-bio'), pfBioCount = $('pf-bio-count');
+  var pfColor = $('pf-color'), pfColorClear = $('pf-color-clear');
+  var pfAvatar = $('pf-avatar'), pfAvatarPrev = $('pf-avatar-preview'), pfAvatarClear = $('pf-avatar-clear');
+  var pfBanner = $('pf-banner'), pfBannerPrev = $('pf-banner-preview'), pfBannerClear = $('pf-banner-clear');
+  var pfCancel = $('pf-cancel'), pfSave = $('pf-save');
+  var pfState = {bot_id: '', avatarClear: false, bannerClear: false, colorCleared: false};
+
+  function openProfileModal(botId){
+    var bot = botById(botId); if (!bot) { return; }
+    if (!bot.ready) { toast(t('pf_offline'), 'error'); return; }
+    var user = bot.user || {};
+    pfState = {bot_id: botId, avatarClear: false, bannerClear: false, colorCleared: false};
+    pfName.value = user.display_name || user.username || '';
+    pfBio.value = '';
+    pfBioCount.textContent = '0/190';
+    pfColor.value = '#7289da';
+    pfAvatar.value = ''; pfBanner.value = '';
+    pfAvatarPrev.style.backgroundImage = user.avatar_url ? 'url(' + JSON.stringify(user.avatar_url).slice(1,-1).replace(/[()]/g, '\\$&') + ')' : '';
+    pfAvatarPrev.textContent = user.avatar_url ? '' : t('pf_avatar');
+    pfBannerPrev.style.backgroundImage = '';
+    pfBannerPrev.textContent = t('pf_banner');
+    pfErr.style.display = 'none';
+    pfModal.classList.remove('hidden');
+  }
+  function closeProfileModal(){ pfModal.classList.add('hidden'); }
+  pfCancel.addEventListener('click', closeProfileModal);
+  pfModal.addEventListener('click', function(e){ if (e.target === pfModal) { closeProfileModal(); } });
+
+  pfBio.addEventListener('input', function(){ pfBioCount.textContent = pfBio.value.length + '/190'; });
+  function previewFile(input, previewEl){
+    var file = input.files && input.files[0];
+    if (!file) { return; }
+    var reader = new FileReader();
+    reader.onload = function(e){
+      previewEl.style.backgroundImage = 'url("' + e.target.result + '")';
+      previewEl.textContent = '';
+    };
+    reader.readAsDataURL(file);
+  }
+  pfAvatar.addEventListener('change', function(){ pfState.avatarClear = false; previewFile(pfAvatar, pfAvatarPrev); });
+  pfBanner.addEventListener('change', function(){ pfState.bannerClear = false; previewFile(pfBanner, pfBannerPrev); });
+  pfAvatarClear.addEventListener('click', function(){
+    pfState.avatarClear = true;
+    pfAvatar.value = '';
+    pfAvatarPrev.style.backgroundImage = '';
+    pfAvatarPrev.textContent = '(removed)';
+  });
+  pfBannerClear.addEventListener('click', function(){
+    pfState.bannerClear = true;
+    pfBanner.value = '';
+    pfBannerPrev.style.backgroundImage = '';
+    pfBannerPrev.textContent = '(removed)';
+  });
+  pfColorClear.addEventListener('click', function(){
+    pfState.colorCleared = true;
+    pfColor.value = '#000000';
+  });
+  pfSave.addEventListener('click', function(){
+    if (!pfState.bot_id) { return; }
+    var fd = new FormData();
+    fd.append('display_name', pfName.value.trim());
+    fd.append('bio', pfBio.value);
+    if (!pfState.colorCleared) {
+      fd.append('accent_color', pfColor.value.replace('#', ''));
+    }
+    if (pfState.avatarClear) { fd.append('avatar_clear', '1'); }
+    else if (pfAvatar.files && pfAvatar.files[0]) { fd.append('avatar', pfAvatar.files[0]); }
+    if (pfState.bannerClear) { fd.append('banner_clear', '1'); }
+    else if (pfBanner.files && pfBanner.files[0]) { fd.append('banner', pfBanner.files[0]); }
+    pfSave.disabled = true;
+    pfErr.style.display = 'none';
+    fetch('/api/profile/' + encodeURIComponent(pfState.bot_id), {
+      method: 'POST',
+      headers: {'Authorization': 'Bearer ' + token},
+      body: fd
+    }).then(function(res){
+      pfSave.disabled = false;
+      return res.json().then(function(data){ return {status: res.status, data: data}; });
+    }).then(function(r){
+      if (r.status >= 200 && r.status < 300) {
+        toast(t('pf_saved'), 'success');
+        closeProfileModal();
+        refreshStatus();
+      } else {
+        pfErr.textContent = (r.data && r.data.detail) || t('err_request_failed');
+        pfErr.style.display = 'block';
+      }
+    }).catch(function(){
+      pfSave.disabled = false;
+      pfErr.textContent = t('err_request_failed');
+      pfErr.style.display = 'block';
+    });
   });
 
   cpDelete.addEventListener('click', function(){
