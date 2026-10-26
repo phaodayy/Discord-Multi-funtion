@@ -67,6 +67,13 @@ class LeaveVoiceBody(BaseModel):
     bot_ids: list[str] | None = None
 
 
+class LeaveServerBody(BaseModel):
+    """Body cho bot rời server (guild)."""
+
+    guild_id: str
+    bot_ids: list[str] | None = None
+
+
 class ReactionBody(BaseModel):
     """Body thả reaction vào một tin nhắn."""
 
@@ -251,6 +258,14 @@ async def leave_voice(body: LeaveVoiceBody) -> dict[str, Any]:
     """Cho bot rời voice channel hiện tại; không truyền ``bot_ids`` nghĩa là tất cả."""
     left = await bot_manager.leave_voice(body.bot_ids)
     return {"success": True, "left": left}
+
+
+@router.post("/leave-server")
+async def leave_server(body: LeaveServerBody) -> dict[str, Any]:
+    """Cho bot rời server (guild); không truyền ``bot_ids`` nghĩa là tất cả acc đang ở trong server."""
+    guild_id = _parse_int(body.guild_id, "guild_id")
+    result = await bot_manager.leave_server(guild_id, body.bot_ids)
+    return {"success": True, **result}
 
 
 @router.post("/move")

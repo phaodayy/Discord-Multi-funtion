@@ -644,6 +644,9 @@ input.invalid{border-color:var(--red) !important;}
             <button id="qj-refresh" class="icon-btn" type="button" data-i18n-title="btn_refresh" aria-label="Refresh">
               <span class="ico" data-icon="refresh"></span>
             </button>
+            <button id="gx-leave-server" class="btn btn-sm" type="button">
+              <span class="ico" data-icon="x"></span><span data-i18n="btn_leave_server">Leave server</span>
+            </button>
           </div>
           <div class="vp-cols">
             <div class="vp-accounts">
@@ -1285,6 +1288,9 @@ input.invalid{border-color:var(--red) !important;}
       btn_leave_voice: 'Leave voice',
       confirm_leave_voice: 'All online accounts will leave their voice channels (they stay logged in). Continue?',
       msg_left_voice: '{n} account(s) left the voice channel.',
+      btn_leave_server: 'Leave server',
+      confirm_leave_server: 'All picked accounts (or every account that is a member of {s} if none picked) will LEAVE this server. This is not reversible — they must re-join via invite. Continue?',
+      msg_left_server: '{n}/{t} account(s) left {s}.',
       cp_builder_title: 'Pick components → add as step',
       cp_clear: 'Clear steps', cp_run: 'Run campaign',
       cp_add: 'Add step',
@@ -1502,6 +1508,9 @@ input.invalid{border-color:var(--red) !important;}
       btn_leave_voice: 'Rời voice',
       confirm_leave_voice: 'Toàn bộ tài khoản đang online sẽ rời voice channel (vẫn đăng nhập). Tiếp tục?',
       msg_left_voice: 'Đã cho {n} tài khoản rời voice.',
+      btn_leave_server: 'Rời server',
+      confirm_leave_server: 'Các tài khoản đã tick (hoặc TẤT CẢ acc đang ở trong {s} nếu không tick ai) sẽ RỜI server này. Không thể hoàn tác — muốn vào lại phải có link mời. Tiếp tục?',
+      msg_left_server: 'Đã cho {n}/{t} tài khoản rời khỏi {s}.',
       cp_builder_title: 'Chọn component → thêm thành một bước',
       cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
       cp_add: 'Thêm bước',
@@ -1584,12 +1593,12 @@ input.invalid{border-color:var(--red) !important;}
 
   /* ---------- Confirm dialog ---------- */
   var confirmResolve = null, lastFocused = null;
-  function askConfirm(messageKey){
+  function askConfirm(messageKey, customText){
     return new Promise(function(resolve){
       confirmResolve = resolve;
       lastFocused = document.activeElement;
       confirmTitle.textContent = t('confirm_title');
-      confirmMessage.textContent = t(messageKey);
+      confirmMessage.textContent = customText || t(messageKey);
       confirmOk.textContent = t('btn_confirm');
       confirmCancel.textContent = t('btn_cancel');
       confirmModal.classList.remove('hidden');
@@ -2388,6 +2397,23 @@ input.invalid{border-color:var(--red) !important;}
         toast(t('msg_left_voice').replace('{n}', data.left || 0), 'success');
         refreshStatus();
         loadGuild(true);
+      });
+    });
+  });
+  var gxLeaveServer = $('gx-leave-server');
+  gxLeaveServer.addEventListener('click', function(){
+    var guildId = gxGuild.value;
+    if (!guildId) { toast(t('qj_empty'), 'error'); return; }
+    var guildName = (gxGuilds.filter(function(g){ return g.id === guildId; })[0] || {}).name || guildId;
+    var msg = t('confirm_leave_server').replace('{s}', guildName);
+    askConfirm(null, msg).then(function(ok){
+      if (!ok) { return; }
+      var ids = gxSelectedIds();
+      api('/api/leave-server', 'POST', {guild_id: guildId, bot_ids: ids.length ? ids : null}).then(function(data){
+        if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
+        toast(t('msg_left_server').replace('{n}', data.left || 0).replace('{t}', data.total || 0).replace('{s}', guildName), 'success');
+        refreshStatus();
+        loadGuilds();
       });
     });
   });

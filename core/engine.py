@@ -518,6 +518,23 @@ class Bot(discord.Client):
             self.notify_state_change()
             return False
 
+    async def leave_guild(self, guild_id: int) -> bool:
+        """Rời server (guild) nhưng vẫn giữ nguyên đăng nhập."""
+        try:
+            guild = self.get_guild(guild_id)
+            if guild is None:
+                return True  # Không ở trong server đó, coi như xong
+            await guild.leave()
+            self.error = None
+            app_logger.info("%s đã rời server %s", self.user, guild.name)
+            self.notify_state_change()
+            return True
+        except Exception as exc:
+            self.error = str(exc)
+            app_logger.error("Rời server thất bại cho %s: %s", self.user, exc)
+            self.notify_state_change()
+            return False
+
     async def leave_vc(self) -> bool:
         """Rời voice channel hiện tại nhưng giữ nguyên đăng nhập."""
         try:
@@ -997,6 +1014,24 @@ class BotManager:
             app_logger.warning("Không tìm thấy bot: %s", bot_id)
             return False
         return await bot.rename(name)
+
+    async def leave_server(
+        self, guild_id: int, bot_ids: list[int | str] | None = None
+    ) -> dict[str, Any]:
+        """Cho các tài khoản chỉ định (hoặc tất cả acc đang ở trong server) rời server."""
+        if bot_ids is None:
+            targets = [bot for bot in self.bots if bot.is_ready() and bot.get_guild(guild_id) is not None]
+        else:
+            targets = [
+                bot for bot in (self._find_bot(bid) for bid in bot_ids)
+                if bot is not None and bot.is_ready() and bot.get_guild(guild_id) is not None
+            ]
+        if not targets:
+            return {"left": 0, "total": 0}
+        results = await asyncio.gather(*(bot.leave_guild(guild_id) for bot in targets))
+        left = sum(1 for ok in results if ok)
+        app_logger.info("Đã cho %d/%d bot rời server %s", left, len(targets), guild_id)
+        return {"left": left, "total": len(targets)}
 
     async def leave_voice(self, bot_ids: list[int | str] | None = None) -> int:
         """Rời voice channel cho một hoặc toàn bộ bot ready; giữ nguyên đăng nhập."""
