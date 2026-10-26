@@ -91,6 +91,17 @@ class ChatAllBody(BaseModel):
     delay: float = 1.0
 
 
+class ComponentInteractBody(BaseModel):
+    """Body cho tài khoản bấm nút / chọn option trong kênh chỉ đọc."""
+
+    bot_ids: list[str]
+    channel_id: str
+    message_id: str
+    custom_id: str
+    values: list[str] = Field(default_factory=list)
+    delay: float = 1.0
+
+
 # -----------------------------------------------------------------------------
 # Helpers
 # -----------------------------------------------------------------------------
@@ -285,6 +296,41 @@ async def reaction(body: ReactionBody) -> dict[str, Any]:
     message_id = _parse_int(body.message_id, "message_id")
     reacted = await bot_manager.spam_reaction(channel_id, message_id, body.emoji)
     return {"success": True, "reacted": reacted}
+
+
+@router.get("/bots/{bot_id}/readonly-channels")
+async def get_readonly_channels(bot_id: str) -> dict[str, Any]:
+    """Kênh chỉ đọc mà một tài khoản xem được (shop bot, thông báo, kênh khoá chat)."""
+    return {"channels": bot_manager.get_available_read_only_channels(bot_id)}
+
+
+@router.get("/bots/{bot_id}/channels/{channel_id}/components")
+async def get_channel_components(bot_id: str, channel_id: str, limit: int = 15) -> dict[str, Any]:
+    """Tin nhắn gần đây trong kênh có button hoặc select menu."""
+    messages = await bot_manager.fetch_channel_components(
+        bot_id, _parse_int(channel_id, "channel_id"), limit=limit
+    )
+    return {"messages": messages}
+
+
+@router.post("/components/interact")
+async def interact_component(body: ComponentInteractBody) -> dict[str, Any]:
+    """Cho các tài khoản chỉ định bấm nút hoặc chọn option trong một tin nhắn."""
+    if not body.bot_ids:
+        raise HTTPException(status_code=400, detail="Cần chọn ít nhất một tài khoản")
+    if not body.custom_id:
+        raise HTTPException(status_code=400, detail="Thiếu custom_id của component")
+    channel_id = _parse_int(body.channel_id, "channel_id")
+    message_id = _parse_int(body.message_id, "message_id")
+    result = await bot_manager.interact_component(
+        body.bot_ids,
+        channel_id,
+        message_id,
+        body.custom_id,
+        body.values,
+        max(0.0, body.delay),
+    )
+    return {"success": True, **result}
 
 
 @router.get("/tokens")

@@ -1309,6 +1309,166 @@ class BotManager:
         return sent
 
     # ------------------------------------------------------------------
+    # Component (nút / select menu) trong kênh chỉ đọc
+    # ------------------------------------------------------------------
+    def get_available_read_only_channels(self, bot_id: int | str) -> list[dict[str, Any]]:
+        """Kênh tài khoản xem được nhưng không gửi tin (ví dụ kênh thông báo, kênh shop bot)."""
+        bot = self._find_bot(bot_id)
+        if bot is None:
+            return []
+        channels: list[dict[str, Any]] = []
+        for guild in sorted(bot.guilds, key=lambda item: item.name.lower()):
+            try:
+                for entry in self._guild_message_channels(guild):
+                    if entry.get("can_send") is False and entry.get("kind") != "forum":
+                        channels.append(entry)
+            except Exception as exc:
+                app_logger.warning("Không lấy được kênh chỉ đọc của guild %s: %s", guild.id, exc)
+        return channels
+
+    async def fetch_channel_components(
+        self, bot_id: int | str, channel_id: int, limit: int = 15
+    ) -> list[dict[str, Any]]:
+        """Tin nhắn gần đây trong kênh có button / select menu, kèm thông tin component."""
+        bot = self._find_bot(bot_id)
+        if bot is None:
+            return []
+        channel = bot.get_channel(channel_id)
+        if channel is None:
+            try:
+                channel = await bot.fetch_channel(channel_id)
+            except Exception as exc:
+                app_logger.warning("Không mở được kênh %s: %s", channel_id, exc)
+                return []
+
+        results: list[dict[str, Any]] = []
+        try:
+            async for message in channel.history(limit=max(1, min(50, int(limit)))):
+                rows = self._serialize_components(message.components)
+                if not rows:
+                    continue
+                author = getattr(message, "author", None)
+                author_name = getattr(author, "display_name", None) or getattr(author, "name", "")
+                results.append(
+                    {
+                        "message_id": str(message.id),
+                        "channel_id": str(channel.id),
+                        "author": author_name,
+                        "author_bot": bool(getattr(author, "bot", False)),
+                        "content": (message.content or "")[:500],
+                        "created_at": message.created_at.isoformat() if message.created_at else None,
+                        "components": rows,
+                    }
+                )
+        except discord.Forbidden:
+            app_logger.warning("Không có quyền đọc lịch sử kênh %s", channel_id)
+            return []
+        except Exception as exc:
+            app_logger.warning("Lấy tin nhắn kênh %s thất bại: %s", channel_id, exc)
+            return []
+        return results
+
+    @staticmethod
+    def _serialize_components(components: Any) -> list[dict[str, Any]]:
+        """Rút gọn ActionRow / Button / SelectMenu thành dạng JSON đơn giản."""
+        rows: list[dict[str, Any]] = []
+        for row in components or []:
+            children: list[dict[str, Any]] = []
+            for child in getattr(row, "children", []):
+                if isinstance(child, discord.Button):
+                    children.append(
+                        {
+                            "type": "button",
+                            "custom_id": child.custom_id or "",
+                            "label": child.label or "",
+                            "style": int(getattr(child.style, "value", 0) or 0),
+                            "disabled": bool(child.disabled),
+                            "url": child.url or "",
+                            "emoji": str(child.emoji) if child.emoji else "",
+                        }
+                    )
+                elif isinstance(child, discord.SelectMenu):
+                    options = []
+                    for opt in getattr(child, "options", []):
+                        options.append(
+                            {
+                                "label": opt.label,
+                                "value": opt.value,
+                                "description": opt.description or "",
+                                "emoji": str(opt.emoji) if opt.emoji else "",
+                                "default": bool(opt.default),
+                            }
+                        )
+                    children.append(
+                        {
+                            "type": "select",
+                            "custom_id": child.custom_id or "",
+                            "placeholder": child.placeholder or "",
+                            "min_values": int(child.min_values),
+                            "max_values": int(child.max_values),
+                            "disabled": bool(child.disabled),
+                            "options": options,
+                        }
+                    )
+            if children:
+                rows.append({"children": children})
+        return rows
+
+    async def interact_component(
+        self,
+        bot_ids: list[int | str],
+        channel_id: int,
+        message_id: int,
+        custom_id: str,
+        values: list[str] | None = None,
+        delay: float = 1.0,
+    ) -> dict[str, Any]:
+        """Mỗi tài khoản bấm nút / chọn option cho component chỉ định."""
+        results: list[dict[str, Any]] = []
+        success = 0
+        for bid in bot_ids:
+            bot = self._find_bot(bid)
+            if bot is None or not bot.is_ready():
+                results.append({"bot_id": str(bid), "ok": False, "error": "offline"})
+                continue
+            try:
+                channel = bot.get_channel(channel_id) or await bot.fetch_channel(channel_id)
+                message = await channel.fetch_message(message_id)
+                target = self._find_component(message.components, custom_id)
+                if target is None:
+                    results.append({"bot_id": str(bid), "ok": False, "error": "component_not_found"})
+                else:
+                    if isinstance(target, discord.Button):
+                        await target.click()
+                    elif isinstance(target, discord.SelectMenu):
+                        chosen = [opt for opt in target.options if opt.value in (values or [])]
+                        if not chosen:
+                            results.append({"bot_id": str(bid), "ok": False, "error": "no_option"})
+                            continue
+                        await target.choose(*chosen)
+                    results.append({"bot_id": str(bid), "ok": True})
+                    success += 1
+                    app_logger.info(
+                        "Bot %s thao tác component %s ở kênh %s (values=%s)",
+                        bot.user, custom_id, channel_id, values,
+                    )
+            except Exception as exc:
+                app_logger.error("Bot %s thao tác component thất bại: %s", bid, exc)
+                results.append({"bot_id": str(bid), "ok": False, "error": str(exc)[:200]})
+            if delay > 0:
+                await asyncio.sleep(delay)
+        return {"success": success, "total": len(bot_ids), "results": results}
+
+    @staticmethod
+    def _find_component(components: Any, custom_id: str) -> Any:
+        """Tìm Button / SelectMenu theo custom_id trong các ActionRow."""
+        for row in components or []:
+            for child in getattr(row, "children", []):
+                if getattr(child, "custom_id", None) == custom_id:
+                    return child
+        return None
+
+    # ------------------------------------------------------------------
     # Tổng quan
     # ------------------------------------------------------------------
     def get_summary(self) -> dict[str, Any]:
