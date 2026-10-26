@@ -13,11 +13,14 @@ echo ">>> Cài hệ thống phụ thuộc"
 apt-get update -y
 apt-get install -y git python3 python3-venv python3-pip ufw
 
-echo ">>> Clone / cập nhật code vào $APP_DIR"
-if [[ -d "$APP_DIR/.git" ]]; then
+if [[ "${SKIP_GIT:-0}" == "1" ]]; then
+  echo ">>> Bỏ qua git clone (đã có sẵn code ở $APP_DIR)"
+elif [[ -d "$APP_DIR/.git" ]]; then
+  echo ">>> Cập nhật code trong $APP_DIR"
   git -C "$APP_DIR" fetch --all
   git -C "$APP_DIR" reset --hard origin/main
 else
+  echo ">>> Clone code vào $APP_DIR"
   git clone "$REPO" "$APP_DIR"
 fi
 
