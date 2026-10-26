@@ -310,6 +310,9 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .qj-channel.readonly:hover{background:transparent;border-color:transparent;}
 .qj-channel.selected{background:var(--accent-soft);border-color:var(--accent);}
 .qj-channel.selected .ico{color:var(--accent);}
+.qj-channel.is-thread{padding-left:28px;}
+.qj-channel.is-thread .name{font-size:12.5px;}
+.qj-channel > .ico:last-child{width:12px;height:12px;}
 .qj-cat{color:var(--text-faint);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sc-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
 .sc-list-head .sub-label{margin-bottom:8px;}
@@ -816,6 +819,9 @@ input.invalid{border-color:var(--red) !important;}
   var ICONS = {
     bot: svg('<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><line x1="9" x2="9.01" y1="13" y2="13"/><line x1="15" x2="15.01" y1="13" y2="13"/>'),
     settings: svg('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>'),
+    megaphone: svg('<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>'),
+    forum: svg('<path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/>'),
+    thread: svg('<path d="M4 4v8a4 4 0 0 0 4 4h12"/><path d="m16 12 4 4-4 4"/>'),
     lock: svg('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'),
     tick: svg('<polyline points="20 6 9 17 4 12"/>'),
     refresh: svg('<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>'),
@@ -1024,6 +1030,7 @@ input.invalid{border-color:var(--red) !important;}
       sc_from_title: 'Send from', ph_text_link: 'Or paste a channel link or ID',
       sc_target: 'Sending to {c}', sc_no_target: 'Pick a channel first',
       sc_readonly: 'read-only', sc_readonly_hint: 'This account cannot post in this channel.',
+      sc_kind_forum: 'forum', sc_kind_voice: 'voice chat', sc_forum_hint: 'Posting to a forum creates a new post; pick one of its threads instead.',
       gx_step_server: 'Server', gx_step_accounts: 'Choose accounts', gx_step_channel: 'Pick a voice channel to join',
       gx_select_all: 'Select all', gx_select_none: 'Clear', gx_no_accounts: 'None of your online accounts is in this server.',
       gx_not_in_voice: 'Not in voice', gx_selected: '{n}/{t} selected', gx_chat_one: 'Select exactly one account to chat',
@@ -1183,6 +1190,7 @@ input.invalid{border-color:var(--red) !important;}
       sc_from_title: 'Gửi từ tài khoản', ph_text_link: 'Hoặc dán link kênh / ID',
       sc_target: 'Gửi tới {c}', sc_no_target: 'Chọn kênh trước',
       sc_readonly: 'chỉ đọc', sc_readonly_hint: 'Tài khoản này không gửi được tin ở kênh này.',
+      sc_kind_forum: 'diễn đàn', sc_kind_voice: 'chat voice', sc_forum_hint: 'Gửi vào diễn đàn là tạo bài mới; hãy chọn một thread bên trong.',
       gx_step_server: 'Server', gx_step_accounts: 'Chọn tài khoản', gx_step_channel: 'Chọn kênh voice để vào',
       gx_select_all: 'Chọn tất cả', gx_select_none: 'Bỏ chọn', gx_no_accounts: 'Không có tài khoản online nào ở trong server này.',
       gx_not_in_voice: 'Chưa vào voice', gx_selected: 'Đã chọn {n}/{t}', gx_chat_one: 'Chọn đúng 1 tài khoản để nhắn tin',
@@ -2160,15 +2168,20 @@ input.invalid{border-color:var(--red) !important;}
         heading = '<div class="qj-cat">' + esc(ch.category) + '</div>';
       }
       lastCategory = ch.category;
+      // Biểu tượng theo loại kênh, giống thanh bên Discord
+      var kindIcon = {text: 'hash', news: 'megaphone', forum: 'forum', voice: 'volume', thread: 'thread'}[ch.kind] || 'hash';
+      var kindTag = ch.kind === 'forum' ? t('sc_kind_forum') : (ch.kind === 'voice' ? t('sc_kind_voice') : '');
+      var cls = 'qj-channel' + (ch.kind === 'thread' ? ' is-thread' : '');
       if (ch.can_send === false) {
         return heading
-          + '<div class="qj-channel readonly" title="' + esc(t('sc_readonly_hint')) + '">'
-          + icon('lock') + '<span class="name">' + esc(ch.name) + '</span>'
-          + '<span class="meta">' + esc(t('sc_readonly')) + '</span></div>';
+          + '<div class="' + cls + ' readonly" title="' + esc(t(ch.kind === 'forum' ? 'sc_forum_hint' : 'sc_readonly_hint')) + '">'
+          + icon(kindIcon) + '<span class="name">' + esc(ch.name) + '</span>'
+          + '<span class="meta">' + esc(kindTag || t('sc_readonly')) + '</span>' + icon('lock') + '</div>';
       }
       return heading
-        + '<button class="qj-channel' + (ch.id === selected ? ' selected' : '') + '" type="button" data-text-channel-id="' + esc(ch.id) + '">'
-        + icon('hash') + '<span class="name">' + esc(ch.name) + '</span></button>';
+        + '<button class="' + cls + (ch.id === selected ? ' selected' : '') + '" type="button" data-text-channel-id="' + esc(ch.id) + '">'
+        + icon(kindIcon) + '<span class="name">' + esc(ch.name) + '</span>'
+        + (kindTag ? '<span class="meta">' + esc(kindTag) + '</span>' : '') + '</button>';
     }).join('') + '</div>';
   }
   function selectTextChannel(id){

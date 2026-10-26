@@ -1086,27 +1086,78 @@ class BotManager:
         channels: list[dict[str, Any]] = []
         for guild in sorted(bot.guilds, key=lambda item: item.name.lower()):
             try:
-                me = guild.me
-                for channel in guild.text_channels:
-                    perms = channel.permissions_for(me) if me is not None else None
-                    # Kênh không xem được thì bỏ; kênh chỉ đọc vẫn liệt kê để khớp với Discord
-                    if perms is not None and not perms.view_channel:
-                        continue
-                    channels.append(
-                        {
-                            "id": str(channel.id),
-                            "name": channel.name,
-                            "guild_id": str(guild.id),
-                            "guild_name": guild.name,
-                            "category": channel.category.name if channel.category else None,
-                            "can_send": perms is None or bool(perms.send_messages),
-                        }
-                    )
+                channels.extend(self._guild_message_channels(guild))
             except Exception as exc:
                 app_logger.warning(
                     "Không lấy được text channel của guild %s: %s", guild.id, exc
                 )
         return channels
+
+    @staticmethod
+    def _guild_message_channels(guild: discord.Guild) -> list[dict[str, Any]]:
+        """Mọi nơi gửi được tin trong server, theo thứ tự thanh bên Discord.
+
+        Gồm kênh text, kênh thông báo, diễn đàn (và thread trong đó), khung chat
+        của kênh voice/stage và các thread đang mở. Kênh không xem được thì bỏ;
+        kênh chỉ đọc vẫn liệt kê để khớp với Discord.
+        """
+        me = guild.me
+
+        def entry(channel: Any, kind: str, can_send: bool, parent: Any = None) -> dict[str, Any]:
+            category = getattr(parent or channel, "category", None)
+            return {
+                "id": str(channel.id),
+                "name": channel.name,
+                "guild_id": str(guild.id),
+                "guild_name": guild.name,
+                "category": category.name if category else None,
+                "kind": kind,
+                "can_send": can_send,
+                "parent_id": str(parent.id) if parent is not None else None,
+            }
+
+        def perms_of(channel: Any) -> Any:
+            return channel.permissions_for(me) if me is not None else None
+
+        # Thread đang mở, gom theo kênh cha để xếp ngay dưới kênh đó
+        threads_by_parent: dict[int, list[Any]] = {}
+        for thread in getattr(guild, "threads", []):
+            threads_by_parent.setdefault(thread.parent_id, []).append(thread)
+
+        def thread_entries(parent: Any) -> list[dict[str, Any]]:
+            items: list[dict[str, Any]] = []
+            for thread in sorted(threads_by_parent.get(parent.id, []), key=lambda item: item.name.lower()):
+                perms = perms_of(thread)
+                if perms is not None and not perms.view_channel:
+                    continue
+                can_send = perms is None or bool(getattr(perms, "send_messages_in_threads", perms.send_messages))
+                items.append(entry(thread, "thread", can_send, parent))
+            return items
+
+        def sort_key(channel: Any) -> tuple[int, int, int]:
+            category = getattr(channel, "category", None)
+            # Kênh voice luôn nằm dưới kênh text trong cùng danh mục, như Discord hiển thị
+            is_voice = isinstance(channel, (discord.VoiceChannel, discord.StageChannel))
+            return (category.position if category else -1, int(is_voice), channel.position)
+
+        items: list[dict[str, Any]] = []
+        for channel in sorted(guild.channels, key=sort_key):
+            if isinstance(channel, discord.CategoryChannel):
+                continue
+            perms = perms_of(channel)
+            if perms is not None and not perms.view_channel:
+                continue
+            can_send = perms is None or bool(perms.send_messages)
+            if isinstance(channel, discord.ForumChannel):
+                # Gửi vào diễn đàn nghĩa là tạo bài mới; dashboard chỉ gửi vào thread có sẵn
+                items.append(entry(channel, "forum", False))
+                items.extend(thread_entries(channel))
+            elif isinstance(channel, discord.TextChannel):
+                items.append(entry(channel, "news" if channel.is_news() else "text", can_send))
+                items.extend(thread_entries(channel))
+            elif isinstance(channel, (discord.VoiceChannel, discord.StageChannel)):
+                items.append(entry(channel, "voice", can_send))
+        return items
 
     def get_voice_channel_members(self, channel_id: int) -> dict[str, Any] | None:
         """Người đang ở trong một voice channel, nhìn qua bất kỳ bot ready nào thấy kênh đó."""
