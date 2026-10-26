@@ -519,43 +519,26 @@ class Bot(discord.Client):
             return False
 
     async def rename(self, new_nick: str | None) -> bool:
-        """Đổi nickname; ``None`` hoặc ``"reset"`` để trả về tên mặc định."""
+        """Đổi display name toàn cục của tài khoản; ``None`` hoặc ``"reset"`` để xoá."""
         if new_nick is None or new_nick.lower() == "reset":
-            target_nick: str | None = None
+            target: str | None = None
         else:
-            target_nick = new_nick
+            target = new_nick
 
         try:
-            channel = self._current_voice_channel() or self.get_channel(
-                self.target_channel_id
-            )
-            if channel is None:
-                try:
-                    channel = await self.fetch_channel(self.target_channel_id)
-                except Exception as exc:
-                    app_logger.debug(
-                        "Không fetch được channel %s: %s", self.target_channel_id, exc
-                    )
-
-            if channel is None:
-                self.error = "Không tìm thấy guild để đổi tên"
-                app_logger.warning("%s (%s)", self.error, self.user)
-                self.notify_state_change()
-                return False
-
-            guild = channel.guild
-            me = guild.me
-            if me is None:
-                self.error = "Không tìm thấy thành viên trong guild"
-                app_logger.warning("%s (%s)", self.error, self.user)
-                self.notify_state_change()
-                return False
-
-            await me.edit(nick=target_nick)
+            # Đổi global_name — hiện ở mọi server, không cần đang trong guild nào
+            await self.user.edit(global_name=target)
             self.error = None
             app_logger.info(
-                "Đã đổi tên %s → %s", self.user, target_nick or "(mặc định)"
+                "Đã đổi tên %s → %s", self.user, target or "(mặc định)"
             )
+            # Nếu đang trong voice channel, cập nhật thêm nickname của guild đó
+            channel = self._current_voice_channel()
+            if channel is not None and channel.guild.me is not None:
+                try:
+                    await channel.guild.me.edit(nick=target)
+                except Exception as exc:
+                    app_logger.debug("Không đổi nick guild %s: %s", channel.guild.id, exc)
             self.notify_state_change()
             return True
         except Exception as exc:
