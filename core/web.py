@@ -3416,8 +3416,8 @@ input.invalid{border-color:var(--red) !important;}
       var user = b.user || {};
       var hay = (user.display_name || '') + ' ' + (user.username || '') + ' ' + (b.id || '');
       if (query && hay.toLowerCase().indexOf(query) < 0) { return false; }
-      if (filter === 'online' && !b.is_ready) { return false; }
-      if (filter === 'offline' && b.is_ready && !b.error) { return false; }
+      if (filter === 'online' && !b.ready) { return false; }
+      if (filter === 'offline' && b.ready && !b.error) { return false; }
       if (filter === 'in_voice' && !b.is_in_voice) { return false; }
       return true;
     });
@@ -3442,7 +3442,7 @@ input.invalid{border-color:var(--red) !important;}
       var badge;
       if (b.error) { badge = '<span class="user-badge err" title="' + esc(b.error) + '">' + esc(t('status_error') || 'error') + '</span>'; }
       else if (b.is_in_voice) { badge = '<span class="user-badge on">' + esc(t('users_in_voice')) + '</span>'; }
-      else if (b.is_ready) { badge = '<span class="user-badge on">' + esc(t('users_online')) + '</span>'; }
+      else if (b.ready) { badge = '<span class="user-badge on">' + esc(t('users_online')) + '</span>'; }
       else { badge = '<span class="user-badge">' + esc(t('users_offline')) + '</span>'; }
       var voiceCell = b.is_in_voice && b.voice_channel_name ? '#' + esc(b.voice_channel_name) : '—';
       var displayName = user.display_name || user.username || b.id;
