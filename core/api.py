@@ -101,6 +101,23 @@ class ComponentInteractBody(BaseModel):
     values: list[str] = Field(default_factory=list)
 
 
+class CampaignStep(BaseModel):
+    """Một bước trong chiến dịch: bấm nút hoặc chọn option."""
+
+    channel_id: str
+    message_id: str
+    custom_id: str
+    values: list[str] = Field(default_factory=list)
+
+
+class CampaignBody(BaseModel):
+    """Body chạy chiến dịch gồm nhiều bước nối nhau."""
+
+    bot_ids: list[str]
+    steps: list[CampaignStep]
+    wait_between: float = 1.0
+
+
 # -----------------------------------------------------------------------------
 # Helpers
 # -----------------------------------------------------------------------------
@@ -328,6 +345,18 @@ async def interact_component(body: ComponentInteractBody) -> dict[str, Any]:
         body.custom_id,
         body.values,
     )
+    return {"success": True, **result}
+
+
+@router.post("/components/campaign")
+async def run_campaign(body: CampaignBody) -> dict[str, Any]:
+    """Chạy một chiến dịch gồm nhiều bước bấm/chọn, các bước nối nhau."""
+    if not body.bot_ids:
+        raise HTTPException(status_code=400, detail="Cần chọn ít nhất một tài khoản")
+    if not body.steps:
+        raise HTTPException(status_code=400, detail="Chiến dịch chưa có bước nào")
+    steps = [step.model_dump() for step in body.steps]
+    result = await bot_manager.run_campaign(body.bot_ids, steps, max(0.0, body.wait_between))
     return {"success": True, **result}
 
 

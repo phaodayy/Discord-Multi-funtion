@@ -376,6 +376,21 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .pk-select select{font-size:13px;padding:8px 10px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:6px;}
 .pk-select .pk-select-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 .pk-select .pk-select-row select{flex:1;min-width:180px;}
+.cp-saved{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin:12px 0;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);}
+.cp-saved label{min-width:0;}
+.cp-saved label.grow{flex:1;min-width:180px;}
+.cp-saved input,.cp-saved select{font-size:13px;padding:7px 10px;}
+.cp-steps{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;}
+.cp-step{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);font-size:12.5px;}
+.cp-step .cp-num{min-width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.cp-step .cp-label{flex:1;min-width:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cp-step .cp-sub{color:var(--text-muted);font-size:11px;margin-left:6px;}
+.cp-step-x{background:transparent;border:none;color:var(--text-faint);cursor:pointer;padding:4px;border-radius:4px;}
+.cp-step-x:hover{color:var(--red);}
+.cp-wait{min-width:0;}
+.cp-wait input{width:110px;font-size:13px;padding:6px 10px;}
+.cp-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
+.cp-empty{color:var(--text-muted);font-size:13px;padding:12px;border:1px dashed var(--border);border-radius:8px;text-align:center;}
 .gx-accounts{display:flex;flex-direction:column;gap:4px;}
 .gx-account{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;}
 .gx-account:hover{border-color:var(--border-strong);}
@@ -548,6 +563,9 @@ input.invalid{border-color:var(--red) !important;}
         </button>
         <button class="nav-item" type="button" data-view="picker">
           <span class="ico" data-icon="cart"></span><span data-i18n="nav_picker">Pick / Click</span>
+        </button>
+        <button class="nav-item" type="button" data-view="campaign">
+          <span class="ico" data-icon="play"></span><span data-i18n="nav_campaign">Campaign</span>
         </button>
         <button class="nav-item" type="button" data-view="tokens">
           <span class="ico" data-icon="key"></span><span data-i18n="nav_tokens">Tokens</span>
@@ -750,6 +768,81 @@ input.invalid{border-color:var(--red) !important;}
               <span class="hint" data-i18n="pk_parallel_hint">All picked accounts fire at once.</span>
             </div>
             <div id="pk-messages" class="pk-list"></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ===== Campaign (chain pick/clicks) ===== -->
+      <section class="view hidden" data-view="campaign">
+        <section class="panel onboard hidden" id="cp-offline">
+          <span class="ico onboard-ico" data-icon="play"></span>
+          <div class="onboard-body">
+            <h2 data-i18n="cp_offline_title">Accounts are offline</h2>
+            <p class="muted" data-i18n="cp_offline_desc">Log the accounts in on the Voice page, then come back here to build a campaign.</p>
+          </div>
+          <button class="btn btn-primary" type="button" data-goto="voice" data-i18n="btn_go_voice">Go to Voice</button>
+        </section>
+
+        <section class="panel hidden" id="cp-panel">
+          <div class="vp-top">
+            <label class="vp-server"><span data-i18n="gx_step_server">Server</span>
+              <select id="cp-guild"></select>
+            </label>
+            <button id="cp-refresh" class="icon-btn" type="button" data-i18n-title="btn_refresh" aria-label="Refresh">
+              <span class="ico" data-icon="refresh"></span>
+            </button>
+          </div>
+          <p class="hint" data-i18n="cp_intro">Build an ordered list of button/dropdown steps, save it, then run the whole chain with the picked accounts.</p>
+
+          <div class="cp-saved">
+            <label class="grow"><span data-i18n="cp_name">Campaign name</span>
+              <input id="cp-name" type="text" autocomplete="off" data-i18n-ph="cp_name_ph" placeholder="e.g. Buy Héch and confirm">
+            </label>
+            <label><span data-i18n="cp_load">Load</span>
+              <select id="cp-load"></select>
+            </label>
+            <button id="cp-save" class="btn" type="button"><span class="ico" data-icon="save"></span><span data-i18n="btn_save">Save</span></button>
+            <button id="cp-delete" class="btn" type="button"><span class="ico" data-icon="x"></span><span data-i18n="btn_delete">Delete</span></button>
+          </div>
+
+          <div class="vp-cols">
+            <div class="vp-accounts">
+              <div class="panel-head">
+                <h2 data-i18n="gx_step_accounts">Accounts</h2>
+                <div class="gx-bulk">
+                  <button class="btn btn-sm" type="button" id="cp-select-all" data-i18n="gx_select_all">Select all</button>
+                  <button class="btn btn-sm" type="button" id="cp-select-none" data-i18n="gx_select_none">Clear</button>
+                </div>
+              </div>
+              <div id="cp-accounts" class="gx-accounts"></div>
+
+              <div class="panel-head" style="margin-top:16px">
+                <h2 data-i18n="cp_steps_title">Steps</h2>
+                <label class="cp-wait"><span data-i18n="cp_wait">Wait between steps (s)</span>
+                  <input id="cp-wait" type="number" value="1" min="0" step="0.5">
+                </label>
+              </div>
+              <div id="cp-steps" class="cp-steps"></div>
+              <div class="cp-actions">
+                <button id="cp-clear" class="btn" type="button"><span class="ico" data-icon="x"></span><span data-i18n="cp_clear">Clear steps</span></button>
+                <button id="cp-run" class="btn btn-primary" type="button"><span class="ico" data-icon="play"></span><span data-i18n="cp_run">Run campaign</span></button>
+              </div>
+            </div>
+
+            <div class="vp-channels">
+              <div class="sc-list-head">
+                <h2 data-i18n="pk_channels_title">Read-only channels</h2>
+                <input id="cp-filter" type="text" autocomplete="off" data-i18n-ph="ph_filter" placeholder="Filter channels...">
+              </div>
+              <div id="cp-channels" class="qj-groups sc-channels"></div>
+
+              <div class="pk-messages">
+                <div class="panel-head">
+                  <h2 data-i18n="cp_builder_title">Pick components → add as step</h2>
+                </div>
+                <div id="cp-messages" class="pk-list"></div>
+              </div>
+            </div>
           </div>
         </section>
       </section>
@@ -1129,7 +1222,29 @@ input.invalid{border-color:var(--red) !important;}
       pk_choose_opt: 'Choose an option',
       pk_result: '{ok}/{total} accounts succeeded.',
       pk_bot_tag: 'bot',
-      pk_need_values: 'Pick an option first.'
+      pk_need_values: 'Pick an option first.',
+      nav_campaign: 'Campaign',
+      cp_offline_title: 'Accounts are offline',
+      cp_offline_desc: 'Log the accounts in on the Voice page, then come back here to build a campaign.',
+      cp_intro: 'Build an ordered list of button / dropdown steps, save it, then run the whole chain with the picked accounts.',
+      cp_name: 'Campaign name', cp_name_ph: 'e.g. Buy Hech and confirm',
+      cp_load: 'Load',
+      cp_steps_title: 'Steps',
+      cp_wait: 'Wait between steps (s)',
+      cp_builder_title: 'Pick components → add as step',
+      cp_clear: 'Clear steps', cp_run: 'Run campaign',
+      cp_add: 'Add step',
+      cp_empty: 'No step yet. Pick a channel, then click a button or an option to add it as a step.',
+      cp_added: 'Added step: {label}',
+      cp_saved: 'Campaign "{name}" saved.',
+      cp_loaded: 'Loaded campaign "{name}".',
+      cp_deleted: 'Deleted campaign "{name}".',
+      cp_need_name: 'Give the campaign a name first.',
+      cp_need_steps: 'The campaign has no step yet.',
+      cp_no_saved: '(no saved campaign)',
+      cp_running: 'Running {n} steps...',
+      cp_done: 'Done — summary in Advanced logs.',
+      btn_delete: 'Delete'
     },
     vi: {
       login_sub: 'Đăng nhập để quản lý hệ thống voice',
@@ -1305,7 +1420,29 @@ input.invalid{border-color:var(--red) !important;}
       pk_choose_opt: 'Chọn một mục',
       pk_result: '{ok}/{total} tài khoản thành công.',
       pk_bot_tag: 'bot',
-      pk_need_values: 'Hãy chọn một mục trước.'
+      pk_need_values: 'Hãy chọn một mục trước.',
+      nav_campaign: 'Chiến dịch',
+      cp_offline_title: 'Chưa có tài khoản online',
+      cp_offline_desc: 'Hãy đăng nhập tài khoản ở trang Voice, rồi quay lại đây để dựng chiến dịch.',
+      cp_intro: 'Dựng chuỗi các bước bấm nút / chọn dropdown, lưu lại rồi chạy toàn bộ chuỗi với các tài khoản đã chọn.',
+      cp_name: 'Tên chiến dịch', cp_name_ph: 'ví dụ: Mua Héch và xác nhận',
+      cp_load: 'Mở',
+      cp_steps_title: 'Các bước',
+      cp_wait: 'Giãn cách giữa các bước (s)',
+      cp_builder_title: 'Chọn component → thêm thành một bước',
+      cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
+      cp_add: 'Thêm bước',
+      cp_empty: 'Chưa có bước nào. Chọn một kênh rồi bấm nút hoặc chọn option để thêm thành bước.',
+      cp_added: 'Đã thêm bước: {label}',
+      cp_saved: 'Đã lưu chiến dịch "{name}".',
+      cp_loaded: 'Đã nạp chiến dịch "{name}".',
+      cp_deleted: 'Đã xoá chiến dịch "{name}".',
+      cp_need_name: 'Hãy đặt tên chiến dịch trước.',
+      cp_need_steps: 'Chiến dịch chưa có bước nào.',
+      cp_no_saved: '(chưa có chiến dịch nào)',
+      cp_running: 'Đang chạy {n} bước...',
+      cp_done: 'Xong — xem chi tiết ở log trang Nâng cao.',
+      btn_delete: 'Xoá'
     }
   };
   var lang = localStorage.getItem('mgl_lang') === 'en' ? 'en' : 'vi';
@@ -1353,7 +1490,7 @@ input.invalid{border-color:var(--red) !important;}
   var TOKEN_KEY = 'mgl_dashboard_token';
   var CHAT_CHANNEL_KEY = 'mgl_chat_channel';
   var VIEW_KEY = 'mgl_view';
-  var VIEWS = ['voice', 'messages', 'picker', 'tokens', 'advanced'];
+  var VIEWS = ['voice', 'messages', 'picker', 'campaign', 'tokens', 'advanced'];
   var currentView = VIEWS.indexOf(localStorage.getItem(VIEW_KEY)) >= 0 ? localStorage.getItem(VIEW_KEY) : 'voice';
   var token = localStorage.getItem(TOKEN_KEY) || '';
   var ws = null, wsRetryTimer = null, authFailed = false;
@@ -1434,6 +1571,7 @@ input.invalid{border-color:var(--red) !important;}
     if (name === 'voice' && token) { renderVoicePage(); }
     if (name === 'messages' && token) { renderMessagesPage(); }
     if (name === 'picker' && token) { renderPickerPage(); }
+    if (name === 'campaign' && token) { renderCampaignPage(); }
     if (name === 'advanced') { logConsole.scrollTop = logConsole.scrollHeight; }
     window.scrollTo(0, 0);
   }
@@ -1649,6 +1787,7 @@ input.invalid{border-color:var(--red) !important;}
     scheduleVoiceRefresh();
     if (currentView === 'messages') { renderMessagesPage(); }
     if (currentView === 'picker') { renderPickerPage(); }
+    if (currentView === 'campaign') { renderCampaignPage(); }
   }
   function statusOf(bot){
     if (bot.error) { return {label: t('status_error'), cls: 'badge-error'}; }
@@ -2613,6 +2752,351 @@ input.invalid{border-color:var(--red) !important;}
       if (!values.length) { toast(t('pk_need_values'), 'error'); return; }
       runInteract(p[0], p[1], values);
     }
+  });
+
+  /* ---------- Chiến dịch: chuỗi bấm/chọn + lưu/mở ---------- */
+  var CP_GUILD_KEY = 'mgl_cp_guild';
+  var CP_STORE_KEY = 'mgl_cp_store'; // {name: {guild_id, steps: [...]}}
+  var cpOffline = $('cp-offline'), cpPanel = $('cp-panel');
+  var cpGuild = $('cp-guild'), cpRefresh = $('cp-refresh');
+  var cpAccountsEl = $('cp-accounts'), cpSelectAll = $('cp-select-all'), cpSelectNone = $('cp-select-none');
+  var cpFilter = $('cp-filter'), cpChannelsEl = $('cp-channels'), cpMessagesEl = $('cp-messages');
+  var cpStepsEl = $('cp-steps'), cpWait = $('cp-wait'), cpClear = $('cp-clear'), cpRun = $('cp-run');
+  var cpName = $('cp-name'), cpLoad = $('cp-load'), cpSave = $('cp-save'), cpDelete = $('cp-delete');
+  var cpGuilds = [], cpGuildSig = null, cpPicked = {}, cpList = [], cpListKey = '';
+  var cpChannelId = '', cpMessages = [], cpMsgKey = '', cpSteps = [], cpBusy = false;
+
+  function cpGuildData(){
+    return cpGuilds.filter(function(g){ return g.id === cpGuild.value; })[0] || null;
+  }
+  function cpPickedIds(){
+    var guild = cpGuildData();
+    if (!guild) { return []; }
+    return guild.accounts.filter(function(acc){ return cpPicked[acc.id]; }).map(function(acc){ return acc.id; });
+  }
+  function cpStore(){
+    try { return JSON.parse(localStorage.getItem(CP_STORE_KEY) || '{}'); } catch(e){ return {}; }
+  }
+  function cpStoreWrite(obj){
+    localStorage.setItem(CP_STORE_KEY, JSON.stringify(obj));
+  }
+  function renderCampaignPage(){
+    cpOffline.classList.toggle('hidden', isOnline());
+    cpPanel.classList.toggle('hidden', !isOnline());
+    if (isOnline() && currentView === 'campaign') {
+      loadCpGuilds();
+      renderCpSavedList();
+      renderCpSteps();
+    }
+  }
+  function loadCpGuilds(){
+    if (!token || !isOnline()) { return; }
+    api('/api/guilds', 'GET').then(function(data){
+      cpGuilds = (data && data.guilds) || [];
+      renderCpGuildSelect();
+      renderCpAccounts();
+      loadCpChannels();
+    });
+  }
+  function renderCpGuildSelect(){
+    var signature = lang + '|' + cpGuilds.map(function(g){ return g.id + ':' + g.name; }).join(',');
+    if (signature === cpGuildSig) { return; }
+    cpGuildSig = signature;
+    var current = cpGuild.value || localStorage.getItem(CP_GUILD_KEY) || '';
+    cpGuild.innerHTML = cpGuilds.length
+      ? cpGuilds.map(function(g){ return '<option value="' + esc(g.id) + '">' + esc(g.name) + '</option>'; }).join('')
+      : '<option value="">' + esc(t('qj_empty')) + '</option>';
+    cpGuild.disabled = !cpGuilds.length;
+    var pick = cpGuilds.filter(function(g){ return g.id === current; })[0] || cpGuilds[0];
+    if (pick) { cpGuild.value = pick.id; }
+  }
+  function renderCpAccounts(){
+    var guild = cpGuildData();
+    var accounts = (guild && guild.accounts) || [];
+    var validIds = {};
+    accounts.forEach(function(acc){ validIds[acc.id] = true; });
+    Object.keys(cpPicked).forEach(function(id){ if (!validIds[id]) { delete cpPicked[id]; } });
+    if (!accounts.length) {
+      cpAccountsEl.innerHTML = '<div class="muted">' + esc(t('gx_no_accounts')) + '</div>';
+      return;
+    }
+    cpAccountsEl.innerHTML = accounts.map(function(acc){
+      var bot = botById(acc.id) || {};
+      var user = bot.user || {};
+      var checked = !!cpPicked[acc.id];
+      var avatar = user.avatar_url
+        ? '<img class="avatar" src="' + esc(user.avatar_url) + '" alt="">'
+        : '<span class="avatar avatar-fallback">' + icon('user') + '</span>';
+      return '<button class="gx-account' + (checked ? ' checked' : '') + '" type="button" role="checkbox" aria-checked="' + checked + '" data-cp-account="' + esc(acc.id) + '">'
+        + '<span class="gx-check">' + (checked ? icon('tick') : '') + '</span>' + avatar
+        + '<div class="gx-acc-info"><div class="gx-acc-name">' + esc(acc.name) + '</div>'
+        + '<div class="gx-acc-sub">@' + esc(user.username || '') + '</div></div></button>';
+    }).join('');
+  }
+  function loadCpChannels(){
+    var guild = cpGuildData();
+    if (!guild) { cpList = []; cpListKey = ''; renderCpChannels(); return; }
+    var picked = cpPickedIds();
+    var sourceId = picked[0] || (guild.accounts[0] && guild.accounts[0].id);
+    var key = guild.id + '|' + (sourceId || '');
+    if (!sourceId) { cpList = []; cpListKey = ''; renderCpChannels(); return; }
+    if (key === cpListKey) { renderCpChannels(); return; }
+    cpListKey = key;
+    cpList = [];
+    cpChannelsEl.innerHTML = '<div class="muted">' + esc(t('qj_loading')) + '</div>';
+    api('/api/bots/' + encodeURIComponent(sourceId) + '/readonly-channels', 'GET').then(function(data){
+      if (key !== cpListKey) { return; }
+      cpList = ((data && data.channels) || []).filter(function(ch){ return ch.guild_id === guild.id; });
+      renderCpChannels();
+    });
+  }
+  function renderCpChannels(){
+    if (!cpList.length) {
+      cpChannelsEl.innerHTML = '<div class="muted">' + esc(t('pk_no_channels')) + '</div>';
+      cpChannelId = '';
+      renderCpMessages();
+      return;
+    }
+    var query = cpFilter.value.trim().toLowerCase();
+    var items = cpList.filter(function(ch){
+      return !query || [ch.name, ch.category || ''].some(function(text){ return text.toLowerCase().indexOf(query) >= 0; });
+    });
+    if (!items.length) {
+      cpChannelsEl.innerHTML = '<div class="muted">' + esc(t('sc_no_match')) + '</div>';
+      return;
+    }
+    if (cpChannelId && !items.some(function(ch){ return ch.id === cpChannelId; })) { cpChannelId = ''; }
+    var lastCategory = null;
+    cpChannelsEl.innerHTML = '<div class="qj-group">' + items.map(function(ch){
+      var heading = '';
+      if (ch.category && ch.category !== lastCategory) {
+        heading = '<div class="qj-cat">' + esc(ch.category) + '</div>';
+      }
+      lastCategory = ch.category;
+      var kindIcon = {text: 'hash', news: 'megaphone', voice: 'volume', thread: 'thread'}[ch.kind] || 'lock';
+      return heading
+        + '<button class="qj-channel' + (ch.kind === 'thread' ? ' is-thread' : '') + (ch.id === cpChannelId ? ' selected' : '') + '" type="button" data-cp-channel="' + esc(ch.id) + '">'
+        + icon(kindIcon) + '<span class="name">' + esc(ch.name) + '</span>'
+        + '<span class="meta">' + icon('lock') + '</span></button>';
+    }).join('') + '</div>';
+  }
+  function cpChannelName(id){
+    var ch = cpList.filter(function(c){ return c.id === id; })[0];
+    return ch ? ('#' + ch.name) : id;
+  }
+  function loadCpMessages(force){
+    if (!cpChannelId) { cpMessages = []; cpMsgKey = ''; renderCpMessages(); return; }
+    var picked = cpPickedIds();
+    var sourceId = picked[0] || ((cpGuildData() || {}).accounts || [{}])[0].id;
+    if (!sourceId) { return; }
+    var key = cpChannelId + '|' + sourceId;
+    if (!force && key === cpMsgKey) { return; }
+    cpMsgKey = key;
+    cpMessagesEl.innerHTML = '<div class="pk-empty">' + esc(t('pk_loading_messages')) + '</div>';
+    api('/api/bots/' + encodeURIComponent(sourceId) + '/channels/' + encodeURIComponent(cpChannelId) + '/components?limit=20', 'GET').then(function(data){
+      if (key !== cpMsgKey) { return; }
+      cpMessages = (data && data.messages) || [];
+      renderCpMessages();
+    });
+  }
+  function renderCpMessages(){
+    if (!cpChannelId) {
+      cpMessagesEl.innerHTML = '<div class="pk-empty">' + esc(t('pk_pick_channel')) + '</div>';
+      return;
+    }
+    if (!cpMessages.length) {
+      cpMessagesEl.innerHTML = '<div class="pk-empty">' + esc(t('pk_no_messages')) + '</div>';
+      return;
+    }
+    cpMessagesEl.innerHTML = cpMessages.map(function(msg, mi){
+      var head = '<div class="pk-msg-head"><b>' + esc(msg.author || '') + '</b>'
+        + (msg.author_bot ? ' <span class="badge">' + esc(t('pk_bot_tag')) + '</span>' : '') + '</div>';
+      var body = msg.content ? '<div class="pk-msg-body">' + esc(msg.content) + '</div>' : '';
+      var rows = (msg.components || []).map(function(row){
+        var kids = row.children.map(function(child, ci){
+          var ident = 'm' + mi + '-c' + ci;
+          if (child.type === 'button') {
+            var disabled = child.disabled || !!child.url;
+            var label = child.label || child.emoji || '[button]';
+            return '<button class="pk-btn style-' + esc(String(child.style)) + '" type="button" data-cp-add-btn="' + esc(msg.message_id) + '|' + esc(child.custom_id) + '|' + esc(label) + '"'
+              + (disabled ? ' disabled title="link / disabled"' : '') + '>'
+              + icon('tick') + ' ' + (child.emoji ? esc(child.emoji) + ' ' : '') + esc(label) + '</button>';
+          }
+          var options = (child.options || []).map(function(opt){
+            return '<option value="' + esc(opt.value) + '">'
+              + (opt.emoji ? esc(opt.emoji) + ' ' : '') + esc(opt.label || opt.value)
+              + (opt.description ? ' — ' + esc(opt.description) : '') + '</option>';
+          }).join('');
+          var placeholder = child.placeholder || t('pk_choose_opt');
+          return '<div class="pk-select"><span class="pk-row-label">' + esc(placeholder) + '</span>'
+            + '<div class="pk-select-row">'
+            + '<select data-cp-select="' + ident + '"' + (child.max_values > 1 ? ' multiple size="' + Math.min(child.max_values, 6) + '"' : '') + '>'
+            + options + '</select>'
+            + '<button class="pk-btn style-1" type="button" data-cp-add-sel="' + esc(msg.message_id) + '|' + esc(child.custom_id) + '|' + ident + '|' + esc(placeholder) + '">'
+            + icon('tick') + ' ' + esc(t('cp_add')) + '</button>'
+            + '</div></div>';
+        }).join('');
+        return '<div class="pk-row">' + kids + '</div>';
+      }).join('');
+      return '<div class="pk-msg">' + head + body + rows + '</div>';
+    }).join('');
+  }
+  function renderCpSteps(){
+    if (!cpSteps.length) {
+      cpStepsEl.innerHTML = '<div class="cp-empty">' + esc(t('cp_empty')) + '</div>';
+      return;
+    }
+    cpStepsEl.innerHTML = cpSteps.map(function(step, i){
+      var sub = step.values && step.values.length ? ' = [' + step.values.map(esc).join(', ') + ']' : '';
+      return '<div class="cp-step"><span class="cp-num">' + (i + 1) + '</span>'
+        + '<span class="cp-label">' + esc(step.channel_name || '') + ' · ' + esc(step.label || '') + '<span class="cp-sub">' + sub + '</span></span>'
+        + '<button class="cp-step-x" type="button" data-cp-step-remove="' + i + '" title="' + esc(t('btn_delete')) + '">' + icon('x') + '</button></div>';
+    }).join('');
+  }
+  function renderCpSavedList(){
+    var store = cpStore();
+    var names = Object.keys(store).sort();
+    cpLoad.innerHTML = '<option value="">' + esc(t('cp_no_saved')) + '</option>'
+      + names.map(function(n){ return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
+  }
+  function addStep(step){
+    cpSteps.push(step);
+    renderCpSteps();
+    toast(t('cp_added').replace('{label}', step.label || ''), 'success');
+  }
+  function runCampaign(){
+    var picked = cpPickedIds();
+    if (!picked.length) { toast(t('gx_pick_first'), 'error'); return; }
+    if (!cpSteps.length) { toast(t('cp_need_steps'), 'error'); return; }
+    if (cpBusy) { return; }
+    cpBusy = true;
+    cpRun.disabled = true;
+    var body = {
+      bot_ids: picked,
+      wait_between: Math.max(0, parseFloat(cpWait.value) || 0),
+      steps: cpSteps.map(function(s){
+        return {channel_id: s.channel_id, message_id: s.message_id, custom_id: s.custom_id, values: s.values || []};
+      })
+    };
+    toast(t('cp_running').replace('{n}', cpSteps.length), 'success');
+    api('/api/components/campaign', 'POST', body).then(function(data){
+      cpBusy = false;
+      cpRun.disabled = false;
+      if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
+      toast(t('cp_done'), 'success');
+    });
+  }
+  cpGuild.addEventListener('change', function(){
+    localStorage.setItem(CP_GUILD_KEY, cpGuild.value);
+    cpPicked = {};
+    cpChannelId = '';
+    cpMessages = [];
+    cpMsgKey = '';
+    renderCpAccounts();
+    cpListKey = '';
+    loadCpChannels();
+    renderCpMessages();
+  });
+  cpRefresh.addEventListener('click', function(){ cpListKey = ''; cpMsgKey = ''; loadCpGuilds(); loadCpMessages(true); });
+  cpAccountsEl.addEventListener('click', function(event){
+    var item = event.target.closest('[data-cp-account]');
+    if (!item) { return; }
+    var id = item.getAttribute('data-cp-account');
+    if (cpPicked[id]) { delete cpPicked[id]; } else { cpPicked[id] = true; }
+    renderCpAccounts();
+    cpListKey = '';
+    loadCpChannels();
+  });
+  cpSelectAll.addEventListener('click', function(){
+    var guild = cpGuildData();
+    if (!guild) { return; }
+    guild.accounts.forEach(function(acc){ cpPicked[acc.id] = true; });
+    renderCpAccounts();
+    cpListKey = ''; loadCpChannels();
+  });
+  cpSelectNone.addEventListener('click', function(){
+    cpPicked = {};
+    renderCpAccounts();
+    cpListKey = ''; loadCpChannels();
+  });
+  cpFilter.addEventListener('input', renderCpChannels);
+  cpChannelsEl.addEventListener('click', function(event){
+    var item = event.target.closest('[data-cp-channel]');
+    if (!item) { return; }
+    cpChannelId = item.getAttribute('data-cp-channel');
+    renderCpChannels();
+    cpMsgKey = '';
+    loadCpMessages(true);
+  });
+  cpMessagesEl.addEventListener('click', function(event){
+    var btn = event.target.closest('[data-cp-add-btn]');
+    if (btn) {
+      var parts = btn.getAttribute('data-cp-add-btn').split('|');
+      addStep({channel_id: cpChannelId, channel_name: cpChannelName(cpChannelId),
+               message_id: parts[0], custom_id: parts[1], values: [], label: parts.slice(2).join('|')});
+      return;
+    }
+    var sel = event.target.closest('[data-cp-add-sel]');
+    if (sel) {
+      var p = sel.getAttribute('data-cp-add-sel').split('|');
+      var selectEl = cpMessagesEl.querySelector('[data-cp-select="' + p[2] + '"]');
+      var values = [], labels = [];
+      if (selectEl) {
+        for (var i = 0; i < selectEl.options.length; i++) {
+          if (selectEl.options[i].selected) {
+            values.push(selectEl.options[i].value);
+            labels.push(selectEl.options[i].text);
+          }
+        }
+      }
+      if (!values.length) { toast(t('pk_need_values'), 'error'); return; }
+      addStep({channel_id: cpChannelId, channel_name: cpChannelName(cpChannelId),
+               message_id: p[0], custom_id: p[1], values: values,
+               label: p.slice(3).join('|') + ': ' + labels.join(', ')});
+    }
+  });
+  cpStepsEl.addEventListener('click', function(event){
+    var btn = event.target.closest('[data-cp-step-remove]');
+    if (!btn) { return; }
+    cpSteps.splice(parseInt(btn.getAttribute('data-cp-step-remove'), 10), 1);
+    renderCpSteps();
+  });
+  cpClear.addEventListener('click', function(){ cpSteps = []; renderCpSteps(); });
+  cpRun.addEventListener('click', runCampaign);
+  cpSave.addEventListener('click', function(){
+    var name = cpName.value.trim();
+    if (!name) { toast(t('cp_need_name'), 'error'); return; }
+    if (!cpSteps.length) { toast(t('cp_need_steps'), 'error'); return; }
+    var store = cpStore();
+    store[name] = {guild_id: cpGuild.value, steps: cpSteps};
+    cpStoreWrite(store);
+    renderCpSavedList();
+    cpLoad.value = name;
+    toast(t('cp_saved').replace('{name}', name), 'success');
+  });
+  cpLoad.addEventListener('change', function(){
+    var name = cpLoad.value;
+    if (!name) { return; }
+    var entry = cpStore()[name];
+    if (!entry) { return; }
+    cpSteps = entry.steps || [];
+    cpName.value = name;
+    if (entry.guild_id && cpGuilds.some(function(g){ return g.id === entry.guild_id; })) {
+      cpGuild.value = entry.guild_id;
+      cpListKey = ''; loadCpChannels();
+    }
+    renderCpSteps();
+    toast(t('cp_loaded').replace('{name}', name), 'success');
+  });
+  cpDelete.addEventListener('click', function(){
+    var name = cpName.value.trim() || cpLoad.value;
+    if (!name) { return; }
+    var store = cpStore();
+    if (!store[name]) { return; }
+    delete store[name];
+    cpStoreWrite(store);
+    renderCpSavedList();
+    toast(t('cp_deleted').replace('{name}', name), 'success');
   });
 
   /* ---------- Init ---------- */

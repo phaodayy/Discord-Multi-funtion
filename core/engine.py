@@ -1454,6 +1454,31 @@ class BotManager:
         success = sum(1 for r in results if r.get("ok"))
         return {"success": success, "total": len(bot_ids), "results": list(results)}
 
+    async def run_campaign(
+        self,
+        bot_ids: list[int | str],
+        steps: list[dict[str, Any]],
+        wait_between: float = 1.0,
+    ) -> dict[str, Any]:
+        """Chạy nhiều bước nối nhau: trong một bước tất cả tài khoản bay song song."""
+        step_results: list[dict[str, Any]] = []
+        for index, step in enumerate(steps):
+            try:
+                channel_id = int(step["channel_id"])
+                message_id = int(step["message_id"])
+            except (KeyError, ValueError, TypeError):
+                step_results.append({"step": index, "ok": 0, "total": len(bot_ids), "error": "bad_ids"})
+                continue
+            custom_id = str(step.get("custom_id") or "")
+            values = step.get("values") or []
+            result = await self.interact_component(
+                bot_ids, channel_id, message_id, custom_id, values
+            )
+            step_results.append({"step": index, **result})
+            if wait_between > 0 and index < len(steps) - 1:
+                await asyncio.sleep(wait_between)
+        return {"steps": step_results, "total_steps": len(steps)}
+
     @staticmethod
     def _find_component(components: Any, custom_id: str) -> Any:
         """Tìm Button / SelectMenu theo custom_id trong các ActionRow."""
