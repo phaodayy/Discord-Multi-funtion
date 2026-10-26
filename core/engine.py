@@ -1128,9 +1128,31 @@ class BotManager:
             return {
                 "id": str(guild.id),
                 "name": guild.name,
+                "accounts": self._guild_accounts(guild_id),
                 "channels": [self._voice_channel_detail(channel, own_ids) for channel in channels],
             }
         return None
+
+    def _guild_accounts(self, guild_id: int) -> list[dict[str, Any]]:
+        """Các tài khoản token đang online và là thành viên của server."""
+        accounts: list[dict[str, Any]] = []
+        for bot in self.bots:
+            if not bot.is_ready() or bot.user is None or bot.get_guild(guild_id) is None:
+                continue
+            current = bot._current_voice_channel()
+            in_this_guild = current is not None and current.guild.id == guild_id
+            avatar = getattr(bot.user, "display_avatar", None)
+            accounts.append(
+                {
+                    "id": bot.bot_id,
+                    "name": getattr(bot.user, "display_name", bot.user.name),
+                    "username": bot.user.name,
+                    "avatar_url": str(avatar.url) if avatar else None,
+                    "voice_channel_id": str(current.id) if in_this_guild else None,
+                    "voice_channel_name": current.name if in_this_guild else None,
+                }
+            )
+        return accounts
 
     def _own_user_ids(self) -> set[int]:
         """User ID của các tài khoản token đang chạy."""

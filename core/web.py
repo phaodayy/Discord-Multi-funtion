@@ -354,7 +354,26 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .explorer{display:flex;flex-direction:column;max-height:calc(100vh - 32px);}
 .explorer .panel-head{margin-bottom:10px;}
 #gx-guild{width:100%;font-size:14px;padding:10px 12px;}
-.gx-channels{margin-top:12px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:2px;}
+.gx-body{overflow-y:auto;min-height:0;display:flex;flex-direction:column;}
+.gx-step{display:flex;align-items:center;gap:8px;margin:14px 0 8px;color:var(--text-muted);font-size:12px;font-weight:700;}
+.explorer .gx-step:first-of-type{margin-top:0;}
+.gx-step .link-btn{margin-left:auto;font-size:12px;}
+.gx-num{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--accent-soft);color:var(--accent);font-size:11px;}
+.gx-accounts{display:flex;flex-direction:column;gap:4px;}
+.gx-account{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;}
+.gx-account:hover{border-color:var(--border-strong);}
+.gx-account.checked{border-color:var(--accent);background:var(--accent-soft);}
+.gx-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border-strong);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;}
+.gx-account.checked .gx-check{background:var(--accent);border-color:var(--accent);}
+.gx-check .ico{width:11px;height:11px;}
+.gx-account .avatar{width:26px;height:26px;}
+.gx-acc-info{flex:1;min-width:0;}
+.gx-acc-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gx-acc-sub{font-size:11.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gx-acc-sub.in{color:var(--green);}
+.gx-acc-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;}
+.gx-acc-actions .hint{margin:0;}
+.gx-channels{overflow-y:visible;display:flex;flex-direction:column;gap:8px;padding-right:2px;}
 .gx-channel{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);}
 .gx-channel.here{border-color:rgba(35,165,90,.55);background:rgba(35,165,90,.07);}
 .gx-head{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 10px;}
@@ -688,8 +707,22 @@ input.invalid{border-color:var(--red) !important;}
                 <span class="ico" data-icon="refresh"></span>
               </button>
             </div>
+            <div class="gx-step"><span class="gx-num">1</span><span data-i18n="gx_step_server">Choose a server</span></div>
             <select id="gx-guild" aria-label="Server"></select>
-            <div id="qj-channels" class="gx-channels"></div>
+            <div class="gx-body">
+              <div class="gx-step"><span class="gx-num">2</span><span data-i18n="gx_step_accounts">Choose accounts</span>
+                <button class="link-btn" id="gx-select-all" type="button" data-i18n="gx_select_all">Select all</button>
+              </div>
+              <div id="gx-accounts" class="gx-accounts"></div>
+              <div class="gx-acc-actions">
+                <span class="hint" id="gx-selected-hint"></span>
+                <button id="gx-chat" class="btn btn-sm" type="button" disabled>
+                  <span class="ico" data-icon="message"></span><span data-i18n="btn_chat">Chat</span>
+                </button>
+              </div>
+              <div class="gx-step"><span class="gx-num">3</span><span data-i18n="gx_step_channel">Pick a voice channel to join</span></div>
+              <div id="qj-channels" class="gx-channels"></div>
+            </div>
           </section>
         </aside>
        </div>
@@ -895,6 +928,7 @@ input.invalid{border-color:var(--red) !important;}
   var ICONS = {
     bot: svg('<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><line x1="9" x2="9.01" y1="13" y2="13"/><line x1="15" x2="15.01" y1="13" y2="13"/>'),
     settings: svg('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>'),
+    tick: svg('<polyline points="20 6 9 17 4 12"/>'),
     refresh: svg('<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>'),
     x: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
     home: svg('<path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>'),
@@ -1094,6 +1128,10 @@ input.invalid{border-color:var(--red) !important;}
       rename_title: 'Rename all accounts',
       gx_title: 'Servers', gx_offline: 'Accounts are not online yet', gx_token_tag: 'Token',
       gx_no_voice: 'This server has no voice channel.', gx_here_btn: 'Here',
+      gx_step_server: 'Choose a server', gx_step_accounts: 'Choose accounts', gx_step_channel: 'Pick a voice channel to join',
+      gx_select_all: 'Select all', gx_select_none: 'Clear', gx_no_accounts: 'None of your online accounts is in this server.',
+      gx_not_in_voice: 'Not in voice', gx_selected: '{n}/{t} selected', gx_chat_one: 'Select exactly one account to chat',
+      gx_pick_first: 'Select at least one account first.',
       msg_tokens_added: 'Logging in {n} new account(s) and joining the current channel...',
       msg_tokens_removed: 'Logged out {n} removed account(s).'
     },
@@ -1242,6 +1280,10 @@ input.invalid{border-color:var(--red) !important;}
       rename_title: 'Đổi tên tất cả tài khoản',
       gx_title: 'Server', gx_offline: 'Tài khoản chưa online', gx_token_tag: 'Token',
       gx_no_voice: 'Server này không có kênh voice.', gx_here_btn: 'Đang ở đây',
+      gx_step_server: 'Chọn server', gx_step_accounts: 'Chọn tài khoản', gx_step_channel: 'Chọn kênh voice để vào',
+      gx_select_all: 'Chọn tất cả', gx_select_none: 'Bỏ chọn', gx_no_accounts: 'Không có tài khoản online nào ở trong server này.',
+      gx_not_in_voice: 'Chưa vào voice', gx_selected: 'Đã chọn {n}/{t}', gx_chat_one: 'Chọn đúng 1 tài khoản để nhắn tin',
+      gx_pick_first: 'Hãy chọn ít nhất một tài khoản.',
       msg_tokens_added: 'Đang đăng nhập {n} tài khoản mới và vào kênh hiện tại...',
       msg_tokens_removed: 'Đã đăng xuất {n} tài khoản bị xoá.'
     }
@@ -2121,6 +2163,8 @@ input.invalid{border-color:var(--red) !important;}
     }
     if (!online) {
       gxLoadedGuild = '';
+      gxData = null;
+      renderAccounts();
       qjChannels.innerHTML = '<div class="muted">' + esc(t('qj_no_bots')) + '</div>';
       return;
     }
@@ -2156,26 +2200,98 @@ input.invalid{border-color:var(--red) !important;}
       + (member.is_own ? '<span class="gx-tag">' + esc(t('gx_token_tag')) + '</span>' : '') + '</span>'
       + '<span class="member-icons">' + icons + '</span></div>';
   }
+  /* Tài khoản được chọn trong server hiện tại; tài khoản mới thấy lần đầu được chọn sẵn */
+  var gxAccountsEl = $('gx-accounts'), gxSelectAll = $('gx-select-all');
+  var gxSelectedHint = $('gx-selected-hint'), gxChat = $('gx-chat');
+  var gxPicked = {}, gxKnown = {};
+
+  function gxAccounts(){ return (gxData && gxData.accounts) || []; }
+  function gxSelectedIds(){
+    return gxAccounts().filter(function(acc){ return gxPicked[acc.id]; }).map(function(acc){ return acc.id; });
+  }
+  function renderAccounts(){
+    var accounts = gxAccounts();
+    accounts.forEach(function(acc){
+      if (!gxKnown[acc.id]) { gxKnown[acc.id] = true; gxPicked[acc.id] = true; }
+    });
+    if (!accounts.length) {
+      gxAccountsEl.innerHTML = '<div class="muted">' + esc(t('gx_no_accounts')) + '</div>';
+    } else {
+      gxAccountsEl.innerHTML = accounts.map(function(acc){
+        var checked = !!gxPicked[acc.id];
+        var avatar = acc.avatar_url
+          ? '<img class="avatar" src="' + esc(acc.avatar_url) + '" alt="">'
+          : '<span class="avatar avatar-fallback">' + icon('user') + '</span>';
+        var sub = acc.voice_channel_name
+          ? '<div class="gx-acc-sub in">' + esc(acc.voice_channel_name) + '</div>'
+          : '<div class="gx-acc-sub">' + esc(t('gx_not_in_voice')) + '</div>';
+        return '<button class="gx-account' + (checked ? ' checked' : '') + '" type="button" role="checkbox" aria-checked="' + checked + '" data-gx-account="' + esc(acc.id) + '">'
+          + '<span class="gx-check">' + (checked ? icon('tick') : '') + '</span>' + avatar
+          + '<div class="gx-acc-info"><div class="gx-acc-name">' + esc(acc.name) + '</div>' + sub + '</div></button>';
+      }).join('');
+    }
+    var count = gxSelectedIds().length;
+    gxSelectedHint.textContent = t('gx_selected').replace('{n}', count).replace('{t}', accounts.length);
+    gxSelectAll.textContent = t(count === accounts.length && accounts.length ? 'gx_select_none' : 'gx_select_all');
+    // Nhắn tin luôn từ đúng một tài khoản
+    gxChat.disabled = count !== 1;
+    gxChat.title = count === 1 ? '' : t('gx_chat_one');
+  }
   function renderExplorer(){
-    var total = (lastSummary && lastSummary.total_bots) || 0;
+    renderAccounts();
     var channels = (gxData && gxData.channels) || [];
     if (!channels.length) {
       qjChannels.innerHTML = '<div class="muted">' + esc(t('gx_no_voice')) + '</div>';
       return;
     }
+    var selected = gxSelectedIds();
+    var whereIs = {};
+    gxAccounts().forEach(function(acc){ whereIs[acc.id] = acc.voice_channel_id; });
     qjChannels.innerHTML = channels.map(function(ch){
       var limit = ch.user_limit ? String(ch.user_limit) : '∞';
       var ownHere = ch.members.filter(function(member){ return member.is_own; }).length;
-      var allHere = total > 0 && ownHere >= total;
+      var selectedHere = selected.filter(function(id){ return whereIs[id] === ch.id; }).length;
+      var allHere = selected.length > 0 && selectedHere === selected.length;
+      var disabled = !selected.length || allHere;
+      var label = allHere ? t('gx_here_btn') : t('btn_enter') + (selected.length ? ' (' + selected.length + ')' : '');
       return '<div class="gx-channel' + (ownHere ? ' here' : '') + '">'
         + '<div class="gx-head">' + icon('volume')
         + '<span class="gx-name" title="' + esc(ch.name) + '">' + esc(ch.name) + '</span>'
         + '<span class="gx-count">' + ch.members.length + '/' + limit + '</span>'
-        + '<button class="btn btn-sm' + (allHere ? '' : ' btn-primary') + '" type="button" data-gx-join="' + esc(ch.id) + '"' + (allHere ? ' disabled' : '') + '>'
-        + esc(t(allHere ? 'gx_here_btn' : 'btn_enter')) + '</button></div>'
+        + '<button class="btn btn-sm' + (disabled ? '' : ' btn-primary') + '" type="button" data-gx-join="' + esc(ch.id) + '"' + (disabled ? ' disabled' : '') + '>'
+        + esc(label) + '</button></div>'
         + (ch.members.length ? '<div class="gx-members">' + ch.members.map(gxMember).join('') + '</div>' : '')
         + '</div>';
     }).join('');
+  }
+  gxAccountsEl.addEventListener('click', function(event){
+    var item = event.target.closest('[data-gx-account]');
+    if (!item) { return; }
+    var id = item.getAttribute('data-gx-account');
+    gxPicked[id] = !gxPicked[id];
+    renderExplorer();
+  });
+  gxSelectAll.addEventListener('click', function(){
+    var accounts = gxAccounts();
+    var allPicked = accounts.length && gxSelectedIds().length === accounts.length;
+    accounts.forEach(function(acc){ gxPicked[acc.id] = !allPicked; });
+    renderExplorer();
+  });
+  gxChat.addEventListener('click', function(){
+    var ids = gxSelectedIds();
+    if (ids.length === 1) { openChatPanel(ids[0], gxData && gxData.name); }
+  });
+  function joinSelected(channelId){
+    var ids = gxSelectedIds();
+    if (!ids.length) { toast(t('gx_pick_first'), 'error'); return; }
+    var meta = channelMeta(channelId);
+    if (meta) { saveRecent({id: channelId, name: meta.name, guild: meta.guild_name}); }
+    api('/api/move', 'POST', {target_channel_id: channelId, bot_ids: ids}).then(function(data){
+      if (!data) { toast(t('err_request_failed'), 'error'); return; }
+      if (data.moved > 0) { toast(t('msg_moved').replace('{n}', data.moved), 'success'); }
+      else { toast(t('msg_no_bots'), 'error'); }
+      loadGuild(true);
+    });
   }
   gxGuild.addEventListener('change', function(){ gxData = null; loadGuild(false); });
   // Người khác vào/ra kênh không phát sự kiện tới dashboard nên tự làm mới định kỳ
@@ -2240,7 +2356,7 @@ input.invalid{border-color:var(--red) !important;}
   qjRefresh.addEventListener('click', loadChannels);
   qjChannels.addEventListener('click', function(event){
     var button = event.target.closest('[data-gx-join]');
-    if (button && !button.disabled) { quickJoin(button.getAttribute('data-gx-join')); }
+    if (button && !button.disabled) { joinSelected(button.getAttribute('data-gx-join')); }
   });
 
   /* Bảng chi tiết: ai đang ở trong kênh voice được chọn */
@@ -2463,12 +2579,13 @@ input.invalid{border-color:var(--red) !important;}
       scRenderRecent();
     });
   }
-  function openChatPanel(botId){
+  function openChatPanel(botId, guildName){
     showView('messages');
+    scFilter.value = guildName || '';
     if ([].some.call(scBot.options, function(option){ return option.value === botId; })) {
       scBot.value = botId;
-      if (scBot.value !== scListBot) { loadTextChannels(); }
     }
+    if (scBot.value !== scListBot) { loadTextChannels(); } else { renderTextChannels(); }
     scMessage.focus();
   }
   scBot.addEventListener('change', loadTextChannels);
