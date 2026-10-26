@@ -6,8 +6,9 @@ Token Check/tokens.bak
 *.bak
 .env
 
-# Ignore all plain-text files (do not upload .txt)
+# Ignore all plain-text files (do not upload .txt), except deps lists
 *.txt
+!requirements.txt
 
 # Virtual Environment
 .venv/
