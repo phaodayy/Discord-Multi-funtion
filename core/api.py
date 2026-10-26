@@ -138,6 +138,13 @@ class CampaignBody(BaseModel):
     wait_between: float = 1.0
     loops: int = 1  # 0 = lặp vô hạn, dừng bằng /campaign/stop
     wait_between_loops: float = 2.0
+    name: str | None = None
+
+
+class CampaignStopBody(BaseModel):
+    """Body để dừng chiến dịch; không có id = dừng tất cả."""
+
+    campaign_id: str | None = None
 
 
 # -----------------------------------------------------------------------------
@@ -403,36 +410,35 @@ async def interact_component(body: ComponentInteractBody) -> dict[str, Any]:
 
 @router.post("/components/campaign")
 async def run_campaign(body: CampaignBody) -> dict[str, Any]:
-    """Chạy chiến dịch (nhiều bước, nhiều vòng); chạy nền và trả ngay."""
+    """Khởi động chiến dịch mới (chạy nền). Nhiều chiến dịch có thể chạy song song."""
     if not body.bot_ids:
         raise HTTPException(status_code=400, detail="Cần chọn ít nhất một tài khoản")
     if not body.steps:
         raise HTTPException(status_code=400, detail="Chiến dịch chưa có bước nào")
-    if bot_manager._campaign_running:
-        raise HTTPException(status_code=409, detail="Đang có một chiến dịch chạy; hãy dừng trước")
+    bot_manager.cleanup_finished_campaigns()
     steps = [step.model_dump() for step in body.steps]
-    bot_manager._campaign_task = asyncio.create_task(
-        bot_manager.run_campaign(
-            body.bot_ids,
-            steps,
-            max(0.0, body.wait_between),
-            max(0, int(body.loops)),
-            max(0.0, body.wait_between_loops),
-        )
+    campaign_id = bot_manager.start_campaign(
+        body.bot_ids,
+        steps,
+        max(0.0, body.wait_between),
+        max(0, int(body.loops)),
+        max(0.0, body.wait_between_loops),
+        name=body.name,
     )
-    return {"success": True, "started": True, "loops": body.loops}
+    return {"success": True, "started": True, "campaign_id": campaign_id}
 
 
 @router.post("/components/campaign/stop")
-async def stop_campaign() -> dict[str, Any]:
-    """Dừng chiến dịch đang chạy."""
-    stopped = bot_manager.stop_campaign()
+async def stop_campaign(body: CampaignStopBody | None = None) -> dict[str, Any]:
+    """Dừng một chiến dịch theo id, hoặc tất cả nếu không truyền id."""
+    campaign_id = body.campaign_id if body else None
+    stopped = bot_manager.stop_campaign(campaign_id)
     return {"success": True, "stopped": stopped}
 
 
 @router.get("/components/campaign/status")
 async def campaign_status() -> dict[str, Any]:
-    """Trạng thái chiến dịch: đang chạy, số vòng đã xong."""
+    """Trạng thái toàn bộ chiến dịch: đang chạy, đã kết thúc, số vòng mỗi cái."""
     return bot_manager.campaign_status()
 
 

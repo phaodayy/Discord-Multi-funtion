@@ -395,6 +395,15 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .cp-timing input{width:140px;font-size:13px;padding:6px 10px;}
 .cp-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
 .cp-empty{color:var(--text-muted);font-size:13px;padding:12px;border:1px dashed var(--border);border-radius:8px;text-align:center;}
+.cp-running-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;}
+.cp-run-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);}
+.cp-run-item.on{border-color:var(--accent);}
+.cp-run-item.off{opacity:.75;}
+.cp-run-name{font-weight:600;color:var(--text);font-size:13px;}
+.cp-run-info{flex:1;color:var(--text-muted);font-size:11.5px;}
+.cp-run-badge{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--text-muted);}
+.cp-run-badge.on{color:var(--green);border-color:var(--green);}
+.cp-run-badge.off{color:var(--text-faint);}
 .users-toolbar{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap;}
 .users-toolbar input{flex:1;min-width:220px;font-size:13px;padding:8px 12px;}
 .users-toolbar select{font-size:13px;padding:8px 12px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;}
@@ -932,9 +941,14 @@ input.invalid{border-color:var(--red) !important;}
               <div id="cp-steps" class="cp-steps"></div>
               <div class="cp-actions">
                 <button id="cp-clear" class="btn" type="button"><span class="ico" data-icon="x"></span><span data-i18n="cp_clear">Clear steps</span></button>
-                <button id="cp-stop" class="btn hidden" type="button"><span class="ico" data-icon="x"></span><span data-i18n="cp_stop">Stop</span></button>
                 <button id="cp-run" class="btn btn-primary" type="button"><span class="ico" data-icon="play"></span><span data-i18n="cp_run">Run campaign</span></button>
               </div>
+
+              <div class="panel-head" style="margin-top:16px">
+                <h2 data-i18n="cp_running_title">Running campaigns</h2>
+                <button id="cp-stop-all" class="btn btn-sm hidden" type="button" data-i18n="cp_stop_all">Stop all</button>
+              </div>
+              <div id="cp-running" class="cp-running-list"></div>
             </div>
 
             <div class="vp-channels">
@@ -1383,6 +1397,16 @@ input.invalid{border-color:var(--red) !important;}
       cp_status_running: 'Running — loop {n} done',
       cp_status_idle: 'Idle',
       cp_already_running: 'A campaign is already running.',
+      cp_running_title: 'Running campaigns',
+      cp_stop_all: 'Stop all',
+      cp_run_none: 'No campaign running. Build steps and press Run.',
+      cp_run_loops: '{d}/{t} loops',
+      cp_run_infinite: '{d} loops (∞)',
+      cp_run_steps: '{n} steps',
+      cp_run_bots: '{n} accounts',
+      cp_run_badge_on: 'running',
+      cp_run_badge_off: 'done',
+      cp_name_default: 'Unnamed campaign',
       js_title: 'Join a server',
       js_hint: 'Paste a Discord invite link; the picked accounts (or all online if none) accept it in parallel. Discord may ask for a captcha on new accounts — those will fail with a captcha-required error.',
       js_invite: 'Invite link or code',
@@ -1622,6 +1646,16 @@ input.invalid{border-color:var(--red) !important;}
       cp_status_running: 'Đang chạy — xong vòng {n}',
       cp_status_idle: 'Đang nghỉ',
       cp_already_running: 'Đang có một chiến dịch chạy.',
+      cp_running_title: 'Chiến dịch đang chạy',
+      cp_stop_all: 'Dừng tất cả',
+      cp_run_none: 'Chưa có chiến dịch nào chạy. Dựng các bước rồi bấm Chạy.',
+      cp_run_loops: '{d}/{t} vòng',
+      cp_run_infinite: '{d} vòng (∞)',
+      cp_run_steps: '{n} bước',
+      cp_run_bots: '{n} tài khoản',
+      cp_run_badge_on: 'đang chạy',
+      cp_run_badge_off: 'xong',
+      cp_name_default: 'Chiến dịch chưa đặt tên',
       js_title: 'Vào server (join)',
       js_hint: 'Dán link mời Discord; các tài khoản đã tick (hoặc tất cả nếu không tick ai) cùng vào song song. Discord có thể bắt captcha với acc mới — những acc đó sẽ báo lỗi "captcha required".',
       js_invite: 'Link mời hoặc mã',
@@ -3047,7 +3081,8 @@ input.invalid{border-color:var(--red) !important;}
   var cpAccountsEl = $('cp-accounts'), cpSelectAll = $('cp-select-all'), cpSelectNone = $('cp-select-none');
   var cpFilter = $('cp-filter'), cpChannelsEl = $('cp-channels'), cpMessagesEl = $('cp-messages');
   var cpStepsEl = $('cp-steps'), cpWait = $('cp-wait'), cpClear = $('cp-clear'), cpRun = $('cp-run');
-  var cpStop = $('cp-stop'), cpStatus = $('cp-status');
+  var cpStatus = $('cp-status');
+  var cpStopAll = $('cp-stop-all'), cpRunningEl = $('cp-running');
   var cpLoops = $('cp-loops'), cpWaitLoops = $('cp-wait-loops');
   var cpName = $('cp-name'), cpLoad = $('cp-load'), cpSave = $('cp-save'), cpDelete = $('cp-delete');
   var cpGuilds = [], cpGuildSig = null, cpPicked = {}, cpList = [], cpListKey = '';
@@ -3257,37 +3292,63 @@ input.invalid{border-color:var(--red) !important;}
     var picked = cpPickedIds();
     if (!picked.length) { toast(t('gx_pick_first'), 'error'); return; }
     if (!cpSteps.length) { toast(t('cp_need_steps'), 'error'); return; }
-    if (cpBusy) { return; }
     var body = {
       bot_ids: picked,
       wait_between: Math.max(0, parseFloat(cpWait.value) || 0),
       loops: Math.max(0, parseInt(cpLoops.value, 10) || 0),
       wait_between_loops: Math.max(0, parseFloat(cpWaitLoops.value) || 0),
+      name: cpName.value.trim() || t('cp_name_default'),
       steps: cpSteps.map(function(s){
         return {channel_id: s.channel_id, message_id: s.message_id, custom_id: s.custom_id, values: s.values || []};
       })
     };
     toast(t('cp_running').replace('{n}', cpSteps.length), 'success');
     api('/api/components/campaign', 'POST', body).then(function(data){
-      if (!data || !data.success) {
-        toast(t(data && data.detail === 'Đang có một chiến dịch chạy; hãy dừng trước' ? 'cp_already_running' : 'err_request_failed'), 'error');
-        return;
-      }
+      if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
       startCampaignPolling();
     });
   }
-  function stopCampaign(){
-    api('/api/components/campaign/stop', 'POST', {}).then(function(){
-      pollCampaignStatus();
-    });
+  function stopOneCampaign(id){
+    api('/api/components/campaign/stop', 'POST', {campaign_id: id}).then(function(){ pollCampaignStatus(); });
+  }
+  function stopAllCampaigns(){
+    api('/api/components/campaign/stop', 'POST', {}).then(function(){ pollCampaignStatus(); });
+  }
+  function renderRunningCampaigns(list){
+    var running = list.filter(function(c){ return c.running; });
+    cpStopAll.classList.toggle('hidden', running.length === 0);
+    if (!list.length) {
+      cpRunningEl.innerHTML = '<div class="cp-empty">' + esc(t('cp_run_none')) + '</div>';
+      return;
+    }
+    cpRunningEl.innerHTML = list.map(function(c){
+      var cls = c.running ? 'on' : 'off';
+      var loopsStr = c.loops_target
+        ? t('cp_run_loops').replace('{d}', c.loops_done || 0).replace('{t}', c.loops_target)
+        : t('cp_run_infinite').replace('{d}', c.loops_done || 0);
+      var meta = loopsStr + ' · ' + t('cp_run_steps').replace('{n}', c.steps_count || 0)
+        + ' · ' + t('cp_run_bots').replace('{n}', c.bots_count || 0);
+      var badgeKey = c.running ? 'cp_run_badge_on' : 'cp_run_badge_off';
+      var badgeCls = c.running ? 'on' : 'off';
+      return '<div class="cp-run-item ' + cls + '">'
+        + '<div style="flex:1;min-width:0">'
+        +   '<div class="cp-run-name">' + esc(c.name || t('cp_name_default')) + '</div>'
+        +   '<div class="cp-run-info">' + esc(meta) + '</div>'
+        + '</div>'
+        + '<span class="cp-run-badge ' + badgeCls + '">' + esc(t(badgeKey)) + '</span>'
+        + (c.running
+            ? '<button class="icon-btn" type="button" data-cp-stop="' + esc(c.id) + '" title="' + esc(t('cp_stop')) + '">' + icon('x') + '</button>'
+            : '')
+        + '</div>';
+    }).join('');
   }
   function pollCampaignStatus(){
     api('/api/components/campaign/status', 'GET').then(function(data){
-      cpBusy = !!(data && data.running);
-      cpRun.classList.toggle('hidden', cpBusy);
-      cpStop.classList.toggle('hidden', !cpBusy);
+      var campaigns = (data && data.campaigns) || [];
+      renderRunningCampaigns(campaigns);
+      cpBusy = !!(data && data.running_count);
       if (cpBusy) {
-        cpStatus.textContent = t('cp_status_running').replace('{n}', (data && data.loops_done) || 0);
+        cpStatus.textContent = t('cp_status_running').replace('{n}', data.running_count);
       } else {
         cpStatus.textContent = '';
         if (cpStatusTimer) { clearInterval(cpStatusTimer); cpStatusTimer = null; }
@@ -3299,6 +3360,11 @@ input.invalid{border-color:var(--red) !important;}
     pollCampaignStatus();
     cpStatusTimer = setInterval(pollCampaignStatus, 1500);
   }
+  cpStopAll.addEventListener('click', stopAllCampaigns);
+  cpRunningEl.addEventListener('click', function(event){
+    var btn = event.target.closest('[data-cp-stop]');
+    if (btn) { stopOneCampaign(btn.getAttribute('data-cp-stop')); }
+  });
   cpGuild.addEventListener('change', function(){
     localStorage.setItem(CP_GUILD_KEY, cpGuild.value);
     cpPicked = {};
@@ -3376,7 +3442,6 @@ input.invalid{border-color:var(--red) !important;}
   });
   cpClear.addEventListener('click', function(){ cpSteps = []; renderCpSteps(); });
   cpRun.addEventListener('click', runCampaign);
-  cpStop.addEventListener('click', stopCampaign);
   cpSave.addEventListener('click', function(){
     var name = cpName.value.trim();
     if (!name) { toast(t('cp_need_name'), 'error'); return; }

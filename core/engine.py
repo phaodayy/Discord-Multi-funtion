@@ -654,10 +654,8 @@ class BotManager:
         self.active_mode: str = "idle"  # "idle" / "normal" / "auto_room"
         self.start_timestamp: float = time.time()
         # Trạng thái chiến dịch (bấm/chọn lặp nhiều vòng)
-        self._campaign_cancel: asyncio.Event = asyncio.Event()
-        self._campaign_running: bool = False
-        self._campaign_info: dict[str, Any] = {}
-        self._campaign_task: asyncio.Task | None = None
+        # Nhiều chiến dịch có thể chạy song song; mỗi cái có id riêng.
+        self._campaigns: dict[str, dict[str, Any]] = {}
 
     # ------------------------------------------------------------------
     # Listeners
@@ -1591,11 +1589,12 @@ class BotManager:
         bot_ids: list[int | str],
         steps: list[dict[str, Any]],
         wait_between: float,
+        cancel: asyncio.Event,
     ) -> list[dict[str, Any]]:
         """Một vòng chiến dịch."""
         step_results: list[dict[str, Any]] = []
         for index, step in enumerate(steps):
-            if self._campaign_cancel.is_set():
+            if cancel.is_set():
                 break
             try:
                 channel_id = int(step["channel_id"])
@@ -1609,7 +1608,7 @@ class BotManager:
                 bot_ids, channel_id, message_id, custom_id, values
             )
             step_results.append({"step": index, **result})
-            if wait_between > 0 and index < len(steps) - 1 and not self._campaign_cancel.is_set():
+            if wait_between > 0 and index < len(steps) - 1 and not cancel.is_set():
                 await asyncio.sleep(wait_between)
         return step_results
 
@@ -1662,69 +1661,121 @@ class BotManager:
             "code": code,
         }
 
-    async def run_campaign(
+    def start_campaign(
         self,
         bot_ids: list[int | str],
         steps: list[dict[str, Any]],
         wait_between: float = 1.0,
         loops: int = 1,
         wait_between_loops: float = 2.0,
-    ) -> dict[str, Any]:
-        """Chạy chiến dịch nhiều vòng; ``loops=0`` nghĩa là lặp vô hạn (dừng bằng stop_campaign)."""
-        self._campaign_cancel.clear()
-        self._campaign_running = True
-        self._campaign_info = {
+        name: str | None = None,
+    ) -> str:
+        """Khởi động một chiến dịch mới ở nền. Trả campaign_id duy nhất.
+
+        Nhiều chiến dịch có thể chạy song song — mỗi cái có id và trạng thái riêng.
+        """
+        campaign_id = hashlib.sha1(f"{time.time()}-{random.random()}".encode()).hexdigest()[:12]
+        cancel = asyncio.Event()
+        info: dict[str, Any] = {
+            "id": campaign_id,
+            "name": (name or "").strip() or f"Chiến dịch {campaign_id[:6]}",
             "started_at": time.time(),
             "loops_target": loops,
             "loops_done": 0,
+            "steps_count": len(steps),
+            "bots_count": len(bot_ids),
             "last_step_results": [],
+            "running": True,
+            "cancelled": False,
         }
+        task = asyncio.create_task(
+            self._run_campaign_loop(
+                campaign_id, bot_ids, steps, wait_between, loops, wait_between_loops, cancel, info
+            )
+        )
+        self._campaigns[campaign_id] = {"task": task, "cancel": cancel, "info": info}
+        app_logger.info("Khởi động chiến dịch %s (name=%s)", campaign_id, info["name"])
+        return campaign_id
+
+    async def _run_campaign_loop(
+        self,
+        campaign_id: str,
+        bot_ids: list[int | str],
+        steps: list[dict[str, Any]],
+        wait_between: float,
+        loops: int,
+        wait_between_loops: float,
+        cancel: asyncio.Event,
+        info: dict[str, Any],
+    ) -> None:
+        """Vòng lặp của một chiến dịch; cập nhật thẳng vào ``info``."""
         try:
             index = 0
             while True:
-                if self._campaign_cancel.is_set():
+                if cancel.is_set():
                     break
-                step_results = await self._run_campaign_once(bot_ids, steps, wait_between)
+                step_results = await self._run_campaign_once(bot_ids, steps, wait_between, cancel)
                 index += 1
-                self._campaign_info["loops_done"] = index
-                self._campaign_info["last_step_results"] = step_results
+                info["loops_done"] = index
+                info["last_step_results"] = step_results
                 app_logger.info(
-                    "Chiến dịch: xong vòng %d (mục tiêu %s)",
-                    index, "∞" if loops == 0 else loops,
+                    "[%s] xong vòng %d (mục tiêu %s)",
+                    info["name"], index, "∞" if loops == 0 else loops,
                 )
                 if loops and index >= loops:
                     break
-                if self._campaign_cancel.is_set():
+                if cancel.is_set():
                     break
                 if wait_between_loops > 0:
-                    # Chia nhỏ để stop phản hồi nhanh hơn
                     waited = 0.0
-                    while waited < wait_between_loops and not self._campaign_cancel.is_set():
+                    while waited < wait_between_loops and not cancel.is_set():
                         await asyncio.sleep(min(0.5, wait_between_loops - waited))
                         waited += 0.5
-            return {
-                "loops_done": index,
-                "loops_target": loops,
-                "cancelled": self._campaign_cancel.is_set(),
-                "last_step_results": self._campaign_info["last_step_results"],
-            }
         finally:
-            self._campaign_running = False
-            self._campaign_cancel.clear()
+            info["running"] = False
+            info["cancelled"] = cancel.is_set()
+            info["ended_at"] = time.time()
 
-    def stop_campaign(self) -> bool:
-        """Yêu cầu dừng chiến dịch sớm nhất có thể."""
-        if not self._campaign_running:
-            return False
-        self._campaign_cancel.set()
-        app_logger.info("Chiến dịch: nhận lệnh dừng.")
-        return True
+    def stop_campaign(self, campaign_id: str | None = None) -> int:
+        """Dừng một chiến dịch (theo id) hoặc tất cả nếu không truyền id. Trả số đã dừng."""
+        if campaign_id:
+            entry = self._campaigns.get(campaign_id)
+            if not entry or not entry["info"].get("running"):
+                return 0
+            entry["cancel"].set()
+            app_logger.info("Yêu cầu dừng chiến dịch %s", campaign_id)
+            return 1
+        count = 0
+        for entry in self._campaigns.values():
+            if entry["info"].get("running"):
+                entry["cancel"].set()
+                count += 1
+        if count:
+            app_logger.info("Yêu cầu dừng %d chiến dịch", count)
+        return count
 
-    def campaign_status(self) -> dict[str, Any]:
-        """Trạng thái hiện tại của chiến dịch (đang chạy, số vòng xong...)."""
-        info = dict(self._campaign_info)
-        info["running"] = self._campaign_running
-        return info
+    def campaign_status(self, campaign_id: str | None = None) -> dict[str, Any]:
+        """Trả trạng thái một chiến dịch hoặc tất cả."""
+        if campaign_id:
+            entry = self._campaigns.get(campaign_id)
+            return dict(entry["info"]) if entry else {"running": False}
+        campaigns = [dict(entry["info"]) for entry in self._campaigns.values()]
+        # Sắp xếp: đang chạy trước, mới nhất trên cùng
+        campaigns.sort(key=lambda c: (not c.get("running"), -c.get("started_at", 0)))
+        running = sum(1 for c in campaigns if c.get("running"))
+        return {"running": running > 0, "running_count": running, "campaigns": campaigns}
+
+    def cleanup_finished_campaigns(self, keep_recent: int = 20) -> int:
+        """Dọn các chiến dịch đã kết thúc, giữ ``keep_recent`` cái mới nhất."""
+        finished = [
+            (cid, entry) for cid, entry in self._campaigns.items()
+            if not entry["info"].get("running")
+        ]
+        finished.sort(key=lambda x: x[1]["info"].get("ended_at", 0), reverse=True)
+        to_remove = finished[keep_recent:]
+        for cid, _ in to_remove:
+            self._campaigns.pop(cid, None)
+        return len(to_remove)
 
     @staticmethod
     def _find_component(components: Any, custom_id: str) -> Any:
