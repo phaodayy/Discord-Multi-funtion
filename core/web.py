@@ -2149,12 +2149,14 @@ input.invalid{border-color:var(--red) !important;}
       scChannels.innerHTML = '<div class="muted">' + esc(t('gx_no_accounts')) + '</div>';
       return;
     }
-    if (!scList.length) {
+    if (!scList.some(function(ch){ return ch.can_send !== false; })) {
       scChannels.innerHTML = '<div class="muted">' + esc(t('sc_empty')) + '</div>';
       return;
     }
     var query = scFilter.value.trim().toLowerCase();
+    // Chỉ liệt kê nơi tài khoản gửi được tin; kênh chỉ đọc và diễn đàn không có trong danh sách
     var items = scList.filter(function(ch){
+      if (ch.can_send === false) { return false; }
       return !query || [ch.name, ch.category || ''].some(function(text){ return text.toLowerCase().indexOf(query) >= 0; });
     });
     if (!items.length) {
@@ -2172,12 +2174,6 @@ input.invalid{border-color:var(--red) !important;}
       var kindIcon = {text: 'hash', news: 'megaphone', forum: 'forum', voice: 'volume', thread: 'thread'}[ch.kind] || 'hash';
       var kindTag = ch.kind === 'forum' ? t('sc_kind_forum') : (ch.kind === 'voice' ? t('sc_kind_voice') : '');
       var cls = 'qj-channel' + (ch.kind === 'thread' ? ' is-thread' : '');
-      if (ch.can_send === false) {
-        return heading
-          + '<div class="' + cls + ' readonly" title="' + esc(t(ch.kind === 'forum' ? 'sc_forum_hint' : 'sc_readonly_hint')) + '">'
-          + icon(kindIcon) + '<span class="name">' + esc(ch.name) + '</span>'
-          + '<span class="meta">' + esc(kindTag || t('sc_readonly')) + '</span>' + icon('lock') + '</div>';
-      }
       return heading
         + '<button class="' + cls + (ch.id === selected ? ' selected' : '') + '" type="button" data-text-channel-id="' + esc(ch.id) + '">'
         + icon(kindIcon) + '<span class="name">' + esc(ch.name) + '</span>'
