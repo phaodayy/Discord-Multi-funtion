@@ -351,6 +351,9 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .gx-acc-sub.err{color:var(--red);}
 .gx-account .member-icons{display:flex;gap:3px;color:var(--text-faint);}
 .gx-account .member-icons .ico{width:13px;height:13px;}
+.gx-rename{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;color:var(--text-faint);cursor:pointer;flex:0 0 auto;}
+.gx-rename:hover{background:var(--surface-3);color:var(--accent);}
+.gx-rename .ico{width:14px;height:14px;}
 @media (max-width:900px){
   .vp-cols{grid-template-columns:1fr;}
 }
@@ -1025,6 +1028,7 @@ input.invalid{border-color:var(--red) !important;}
     home: svg('<path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>'),
     cart: svg('<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>'),
     plus: svg('<path d="M12 5v14M5 12h14"/>'),
+    pencil: svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>'),
     server: svg('<rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/>'),
     wifi: svg('<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" x2="12.01" y1="20" y2="20"/>'),
     volume: svg('<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>'),
@@ -1272,6 +1276,9 @@ input.invalid{border-color:var(--red) !important;}
       js_result: '{ok}/{total} accounts joined.',
       js_need_invite: 'Paste an invite link first.',
       js_captcha_warn: 'Captcha-required errors mean Discord wants that account to prove it is human; solve it manually in Discord and try again.',
+      btn_rename_one: 'Rename this account',
+      ph_rename_one: 'New nickname (reset = default)',
+      msg_renamed_one: 'Renamed to "{n}".',
       cp_builder_title: 'Pick components → add as step',
       cp_clear: 'Clear steps', cp_run: 'Run campaign',
       cp_add: 'Add step',
@@ -1483,6 +1490,9 @@ input.invalid{border-color:var(--red) !important;}
       js_result: '{ok}/{total} tài khoản vào được.',
       js_need_invite: 'Hãy dán link mời.',
       js_captcha_warn: 'Lỗi captcha nghĩa là Discord bắt tài khoản đó xác minh người thật; mở Discord thường để giải captcha rồi thử lại.',
+      btn_rename_one: 'Đổi tên tài khoản này',
+      ph_rename_one: 'Nickname mới (reset = mặc định)',
+      msg_renamed_one: 'Đã đổi tên thành "{n}".',
       cp_builder_title: 'Chọn component → thêm thành một bước',
       cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
       cp_add: 'Thêm bước',
@@ -2224,7 +2234,9 @@ input.invalid{border-color:var(--red) !important;}
         return '<button class="gx-account' + (checked ? ' checked' : '') + '" type="button" role="checkbox" aria-checked="' + checked + '" data-gx-account="' + esc(acc.id) + '">'
           + '<span class="gx-check">' + (checked ? icon('tick') : '') + '</span>' + avatar
           + '<div class="gx-acc-info"><div class="gx-acc-name">' + esc(acc.name) + '</div>' + sub + '</div>'
-          + '<span class="member-icons">' + state + '</span></button>';
+          + '<span class="member-icons">' + state + '</span>'
+          + '<span class="gx-rename" data-gx-rename="' + esc(acc.id) + '" title="' + esc(t('btn_rename_one')) + '">' + icon('pencil') + '</span>'
+          + '</button>';
       }).join('');
     }
     var selected = gxSelectedIds();
@@ -2319,6 +2331,27 @@ input.invalid{border-color:var(--red) !important;}
   gxGuild.addEventListener('change', function(){ gxData = null; loadGuild(false); });
   qjRefresh.addEventListener('click', loadGuilds);
   gxAccountsEl.addEventListener('click', function(event){
+    var pen = event.target.closest('[data-gx-rename]');
+    if (pen) {
+      event.stopPropagation();
+      event.preventDefault();
+      var botId = pen.getAttribute('data-gx-rename');
+      var acc = (gxData && gxData.accounts || []).filter(function(a){ return a.id === botId; })[0] || {};
+      var newName = window.prompt(t('ph_rename_one'), acc.name || '');
+      if (newName === null) { return; }
+      newName = newName.trim();
+      if (!newName) { return; }
+      api('/api/rename', 'POST', {bot_id: botId, name: newName}).then(function(data){
+        if (data && data.success && data.affected) {
+          toast(t('msg_renamed_one').replace('{n}', newName), 'success');
+          refreshStatus();
+          loadGuild(true);
+        } else {
+          toast(t('err_request_failed'), 'error');
+        }
+      });
+      return;
+    }
     var item = event.target.closest('[data-gx-account]');
     if (!item) { return; }
     var id = item.getAttribute('data-gx-account');
