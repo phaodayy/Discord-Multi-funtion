@@ -61,6 +61,12 @@ class MoveBody(BaseModel):
     bot_ids: list[str] | None = None
 
 
+class LeaveVoiceBody(BaseModel):
+    """Body cho bot rời voice channel (giữ nguyên đăng nhập)."""
+
+    bot_ids: list[str] | None = None
+
+
 class ReactionBody(BaseModel):
     """Body thả reaction vào một tin nhắn."""
 
@@ -238,6 +244,13 @@ async def rename(body: RenameBody) -> dict[str, Any]:
 
     affected = await bot_manager.rename_all(body.name)
     return {"success": True, "affected": affected}
+
+
+@router.post("/leave-voice")
+async def leave_voice(body: LeaveVoiceBody) -> dict[str, Any]:
+    """Cho bot rời voice channel hiện tại; không truyền ``bot_ids`` nghĩa là tất cả."""
+    left = await bot_manager.leave_voice(body.bot_ids)
+    return {"success": True, "left": left}
 
 
 @router.post("/move")

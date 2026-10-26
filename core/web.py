@@ -662,6 +662,9 @@ input.invalid{border-color:var(--red) !important;}
                   <button id="gx-chat" class="btn btn-sm" type="button" disabled>
                     <span class="ico" data-icon="message"></span><span data-i18n="btn_chat">Chat</span>
                   </button>
+                  <button id="gx-leave" class="btn btn-sm" type="button" title="Leave voice">
+                    <span class="ico" data-icon="x"></span><span data-i18n="btn_leave_voice">Leave voice</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1279,6 +1282,9 @@ input.invalid{border-color:var(--red) !important;}
       btn_rename_one: 'Rename this account',
       ph_rename_one: 'New nickname (reset = default)',
       msg_renamed_one: 'Renamed to "{n}".',
+      btn_leave_voice: 'Leave voice',
+      confirm_leave_voice: 'All online accounts will leave their voice channels (they stay logged in). Continue?',
+      msg_left_voice: '{n} account(s) left the voice channel.',
       cp_builder_title: 'Pick components → add as step',
       cp_clear: 'Clear steps', cp_run: 'Run campaign',
       cp_add: 'Add step',
@@ -1493,6 +1499,9 @@ input.invalid{border-color:var(--red) !important;}
       btn_rename_one: 'Đổi tên tài khoản này',
       ph_rename_one: 'Nickname mới (reset = mặc định)',
       msg_renamed_one: 'Đã đổi tên thành "{n}".',
+      btn_leave_voice: 'Rời voice',
+      confirm_leave_voice: 'Toàn bộ tài khoản đang online sẽ rời voice channel (vẫn đăng nhập). Tiếp tục?',
+      msg_left_voice: 'Đã cho {n} tài khoản rời voice.',
       cp_builder_title: 'Chọn component → thêm thành một bước',
       cp_clear: 'Xoá các bước', cp_run: 'Chạy chiến dịch',
       cp_add: 'Thêm bước',
@@ -2367,6 +2376,20 @@ input.invalid{border-color:var(--red) !important;}
   gxChat.addEventListener('click', function(){
     var ids = gxSelectedIds();
     if (ids.length === 1) { openChatPanel(ids[0], gxData && gxData.id); }
+  });
+  var gxLeave = $('gx-leave');
+  gxLeave.addEventListener('click', function(){
+    askConfirm('confirm_leave_voice').then(function(ok){
+      if (!ok) { return; }
+      var ids = gxSelectedIds();
+      // Không chọn ai = áp dụng cho tất cả bot online
+      api('/api/leave-voice', 'POST', {bot_ids: ids.length ? ids : null}).then(function(data){
+        if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
+        toast(t('msg_left_voice').replace('{n}', data.left || 0), 'success');
+        refreshStatus();
+        loadGuild(true);
+      });
+    });
   });
   selTools.forEach(function(button){
     button.addEventListener('click', function(){

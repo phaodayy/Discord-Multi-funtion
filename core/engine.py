@@ -518,6 +518,24 @@ class Bot(discord.Client):
             self.notify_state_change()
             return False
 
+    async def leave_vc(self) -> bool:
+        """Rời voice channel hiện tại nhưng giữ nguyên đăng nhập."""
+        try:
+            channel = self._current_voice_channel()
+            if channel is None:
+                self.error = None
+                return True  # Đã không ở trong voice, coi như xong
+            await channel.guild.change_voice_state(channel=None)
+            self.error = None
+            app_logger.info("%s đã rời voice channel %s", self.user, channel.name)
+            self.notify_state_change()
+            return True
+        except Exception as exc:
+            self.error = str(exc)
+            app_logger.error("Rời voice thất bại cho %s: %s", self.user, exc)
+            self.notify_state_change()
+            return False
+
     async def rename(self, new_nick: str | None) -> bool:
         """Đổi display name toàn cục của tài khoản; ``None`` hoặc ``"reset"`` để xoá."""
         if new_nick is None or new_nick.lower() == "reset":
@@ -979,6 +997,23 @@ class BotManager:
             app_logger.warning("Không tìm thấy bot: %s", bot_id)
             return False
         return await bot.rename(name)
+
+    async def leave_voice(self, bot_ids: list[int | str] | None = None) -> int:
+        """Rời voice channel cho một hoặc toàn bộ bot ready; giữ nguyên đăng nhập."""
+        if bot_ids is None:
+            targets = [bot for bot in self.bots if bot.is_ready() and bot.is_in_voice]
+        else:
+            targets = [
+                bot
+                for bot in (self._find_bot(bid) for bid in bot_ids)
+                if bot is not None and bot.is_ready() and bot.is_in_voice
+            ]
+        if not targets:
+            return 0
+        results = await asyncio.gather(*(bot.leave_vc() for bot in targets))
+        left = sum(1 for ok in results if ok)
+        app_logger.info("Đã cho %d/%d bot rời voice", left, len(targets))
+        return left
 
     async def move_bots(
         self, channel_id: int, bot_ids: list[int | str] | None = None
