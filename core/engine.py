@@ -1421,43 +1421,38 @@ class BotManager:
         message_id: int,
         custom_id: str,
         values: list[str] | None = None,
-        delay: float = 1.0,
     ) -> dict[str, Any]:
-        """Mỗi tài khoản bấm nút / chọn option cho component chỉ định."""
-        results: list[dict[str, Any]] = []
-        success = 0
-        for bid in bot_ids:
+        """Mỗi tài khoản bấm nút / chọn option cho component chỉ định; chạy song song."""
+
+        async def run_one(bid: int | str) -> dict[str, Any]:
             bot = self._find_bot(bid)
             if bot is None or not bot.is_ready():
-                results.append({"bot_id": str(bid), "ok": False, "error": "offline"})
-                continue
+                return {"bot_id": str(bid), "ok": False, "error": "offline"}
             try:
                 channel = bot.get_channel(channel_id) or await bot.fetch_channel(channel_id)
                 message = await channel.fetch_message(message_id)
                 target = self._find_component(message.components, custom_id)
                 if target is None:
-                    results.append({"bot_id": str(bid), "ok": False, "error": "component_not_found"})
-                else:
-                    if isinstance(target, discord.Button):
-                        await target.click()
-                    elif isinstance(target, discord.SelectMenu):
-                        chosen = [opt for opt in target.options if opt.value in (values or [])]
-                        if not chosen:
-                            results.append({"bot_id": str(bid), "ok": False, "error": "no_option"})
-                            continue
-                        await target.choose(*chosen)
-                    results.append({"bot_id": str(bid), "ok": True})
-                    success += 1
-                    app_logger.info(
-                        "Bot %s thao tác component %s ở kênh %s (values=%s)",
-                        bot.user, custom_id, channel_id, values,
-                    )
+                    return {"bot_id": str(bid), "ok": False, "error": "component_not_found"}
+                if isinstance(target, discord.Button):
+                    await target.click()
+                elif isinstance(target, discord.SelectMenu):
+                    chosen = [opt for opt in target.options if opt.value in (values or [])]
+                    if not chosen:
+                        return {"bot_id": str(bid), "ok": False, "error": "no_option"}
+                    await target.choose(*chosen)
+                app_logger.info(
+                    "Bot %s thao tác component %s ở kênh %s (values=%s)",
+                    bot.user, custom_id, channel_id, values,
+                )
+                return {"bot_id": str(bid), "ok": True}
             except Exception as exc:
                 app_logger.error("Bot %s thao tác component thất bại: %s", bid, exc)
-                results.append({"bot_id": str(bid), "ok": False, "error": str(exc)[:200]})
-            if delay > 0:
-                await asyncio.sleep(delay)
-        return {"success": success, "total": len(bot_ids), "results": results}
+                return {"bot_id": str(bid), "ok": False, "error": str(exc)[:200]}
+
+        results = await asyncio.gather(*(run_one(bid) for bid in bot_ids))
+        success = sum(1 for r in results if r.get("ok"))
+        return {"success": success, "total": len(bot_ids), "results": list(results)}
 
     @staticmethod
     def _find_component(components: Any, custom_id: str) -> Any:

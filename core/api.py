@@ -99,7 +99,6 @@ class ComponentInteractBody(BaseModel):
     message_id: str
     custom_id: str
     values: list[str] = Field(default_factory=list)
-    delay: float = 1.0
 
 
 # -----------------------------------------------------------------------------
@@ -328,7 +327,6 @@ async def interact_component(body: ComponentInteractBody) -> dict[str, Any]:
         message_id,
         body.custom_id,
         body.values,
-        max(0.0, body.delay),
     )
     return {"success": True, **result}
 

@@ -747,11 +747,7 @@ input.invalid{border-color:var(--red) !important;}
           <div class="pk-messages" id="pk-messages-wrap">
             <div class="panel-head">
               <h2 data-i18n="pk_messages_title">Messages with buttons / dropdowns</h2>
-              <div class="pk-delay">
-                <label><span data-i18n="pk_delay">Delay / account (s)</span>
-                  <input id="pk-delay" type="number" value="1.5" min="0" step="0.5">
-                </label>
-              </div>
+              <span class="hint" data-i18n="pk_parallel_hint">All picked accounts fire at once.</span>
             </div>
             <div id="pk-messages" class="pk-list"></div>
           </div>
@@ -1124,7 +1120,7 @@ input.invalid{border-color:var(--red) !important;}
       pk_intro: 'Pick a read-only channel (shop bot, announcements, etc.), then let the selected accounts click a button or choose from a dropdown.',
       pk_channels_title: 'Read-only channels',
       pk_messages_title: 'Messages with buttons / dropdowns',
-      pk_delay: 'Delay / account (s)',
+      pk_parallel_hint: 'All picked accounts fire at once.',
       pk_no_channels: 'No read-only channels in this server for this account.',
       pk_pick_channel: 'Pick a channel to see its buttons and dropdowns.',
       pk_loading_messages: 'Loading messages...',
@@ -1300,7 +1296,7 @@ input.invalid{border-color:var(--red) !important;}
       pk_intro: 'Chọn một kênh chỉ đọc (shop bot, thông báo...), rồi để các tài khoản đã tick bấm nút hoặc chọn trong dropdown.',
       pk_channels_title: 'Kênh chỉ đọc',
       pk_messages_title: 'Tin nhắn có nút / dropdown',
-      pk_delay: 'Giãn cách / tài khoản (s)',
+      pk_parallel_hint: 'Tất cả tài khoản đã tick bấm cùng lúc.',
       pk_no_channels: 'Server này không có kênh chỉ đọc nào mà tài khoản xem được.',
       pk_pick_channel: 'Chọn một kênh để xem nút và dropdown trong đó.',
       pk_loading_messages: 'Đang tải tin nhắn...',
@@ -2365,7 +2361,7 @@ input.invalid{border-color:var(--red) !important;}
   var pkGuild = $('pk-guild'), pkRefresh = $('pk-refresh');
   var pkAccountsEl = $('pk-accounts'), pkSelectAll = $('pk-select-all'), pkSelectNone = $('pk-select-none');
   var pkFilter = $('pk-filter'), pkChannelsEl = $('pk-channels');
-  var pkMessagesEl = $('pk-messages'), pkDelay = $('pk-delay');
+  var pkMessagesEl = $('pk-messages');
   var pkGuilds = [], pkGuildSig = null, pkPicked = {}, pkList = [], pkListKey = '';
   var pkChannelId = '', pkMessages = [], pkMsgKey = '', pkBusy = false;
 
@@ -2543,8 +2539,7 @@ input.invalid{border-color:var(--red) !important;}
       channel_id: pkChannelId,
       message_id: messageId,
       custom_id: customId,
-      values: values || [],
-      delay: Math.max(0, parseFloat(pkDelay.value) || 0)
+      values: values || []
     };
     api('/api/components/interact', 'POST', body).then(function(data){
       pkBusy = false;
