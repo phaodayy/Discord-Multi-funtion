@@ -306,10 +306,12 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .member-icons .ico{width:14px;height:14px;}
 .member-icons .off{color:var(--red);}
 .member-icons .live{color:var(--green);}
+.qj-channel.readonly{cursor:default;color:var(--text-faint);}
+.qj-channel.readonly:hover{background:transparent;border-color:transparent;}
 .qj-channel.selected{background:var(--accent-soft);border-color:var(--accent);}
 .qj-channel.selected .ico{color:var(--accent);}
 .qj-cat{color:var(--text-faint);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.sc-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.sc-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
 .sc-list-head .sub-label{margin-bottom:8px;}
 .sc-list-head input{width:220px;max-width:100%;padding:6px 10px;}
 .sc-channels{max-height:340px;overflow-y:auto;padding-right:2px;}
@@ -353,6 +355,7 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .gx-account{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;}
 .gx-account:hover{border-color:var(--border-strong);}
 .gx-account.checked{border-color:var(--accent);background:var(--accent-soft);}
+.gx-account.radio .gx-check{border-radius:50%;}
 .gx-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border-strong);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;}
 .gx-account.checked .gx-check{background:var(--accent);border-color:var(--accent);}
 .gx-check .ico{width:11px;height:11px;}
@@ -624,40 +627,50 @@ input.invalid{border-color:var(--red) !important;}
         </section>
       </section>
 
-      <!-- ===== Messages ===== -->
+      <!-- ===== Messages: chọn server → tài khoản gửi → kênh chat ===== -->
       <section class="view hidden" data-view="messages">
-        <section class="panel">
-          <div class="panel-head">
-            <h2 data-i18n="sc_title">Send a message</h2>
-            <button id="sc-refresh" class="btn btn-ghost btn-sm" type="button">
-              <span class="ico" data-icon="refresh"></span><span data-i18n="btn_refresh">Refresh</span>
+        <section class="panel onboard hidden" id="msg-offline">
+          <span class="ico onboard-ico" data-icon="message"></span>
+          <div class="onboard-body">
+            <h2 data-i18n="msg_offline_title">Accounts are offline</h2>
+            <p class="muted" data-i18n="msg_offline_desc">Log the accounts in on the Voice page first, then come back here to send a message.</p>
+          </div>
+          <button class="btn btn-primary" type="button" data-goto="voice" data-i18n="btn_go_voice">Go to Voice</button>
+        </section>
+
+        <section class="panel hidden" id="msg-panel">
+          <div class="vp-top">
+            <label class="vp-server"><span data-i18n="gx_step_server">Server</span>
+              <select id="sc-guild"></select>
+            </label>
+            <button id="sc-refresh" class="icon-btn" type="button" data-i18n-title="btn_refresh" aria-label="Refresh">
+              <span class="ico" data-icon="refresh"></span>
             </button>
           </div>
-          <div class="control-row">
-            <label><span data-i18n="lbl_account">Account</span>
-              <select id="sc-bot" style="min-width:200px"></select>
-            </label>
-            <label class="grow"><span data-i18n="lbl_text_link">Channel link or ID</span>
-              <input id="sc-channel" type="text" autocomplete="off" data-i18n-ph="ph_quick_link" placeholder="Paste a channel link or ID">
-            </label>
-          </div>
-          <div id="sc-recent-wrap" class="hidden">
-            <div class="sub-label" data-i18n="recent_title">Recent</div>
-            <div id="sc-recent" class="chip-row"></div>
-          </div>
-          <div class="sc-list-head">
-            <div class="sub-label" data-i18n="sc_channels_title">Or pick a channel</div>
-            <input id="sc-filter" type="text" autocomplete="off" data-i18n-ph="ph_filter" placeholder="Filter channels...">
-          </div>
-          <div id="sc-channels" class="qj-groups sc-channels"></div>
-          <label style="margin-top:14px"><span data-i18n="lbl_message">Message</span>
-            <textarea id="sc-message" data-i18n-ph="ph_message" placeholder="Message content..."></textarea>
-          </label>
-          <div class="sc-actions">
-            <span class="hint" data-i18n="hint_ctrl_enter">Ctrl + Enter to send</span>
-            <button id="sc-send" class="btn btn-primary" type="button">
-              <span class="ico" data-icon="send"></span><span data-i18n="btn_send">Send</span>
-            </button>
+          <div class="vp-cols">
+            <div class="vp-accounts">
+              <div class="panel-head"><h2 data-i18n="sc_from_title">Send from</h2></div>
+              <div id="sc-accounts" class="gx-accounts" role="radiogroup"></div>
+            </div>
+            <div class="vp-channels">
+              <div class="sc-list-head">
+                <h2 data-i18n="sc_channels_title">Text channel</h2>
+                <input id="sc-filter" type="text" autocomplete="off" data-i18n-ph="ph_filter" placeholder="Filter channels...">
+              </div>
+              <div id="sc-channels" class="qj-groups sc-channels"></div>
+              <div class="join-row vp-link">
+                <input id="sc-channel" type="text" autocomplete="off" data-i18n-ph="ph_text_link" placeholder="Or paste a channel link or ID" aria-label="Channel link">
+              </div>
+              <label style="margin-top:14px"><span data-i18n="lbl_message">Message</span>
+                <textarea id="sc-message" data-i18n-ph="ph_message" placeholder="Message content..."></textarea>
+              </label>
+              <div class="sc-actions">
+                <span class="hint" id="sc-target"></span>
+                <button id="sc-send" class="btn btn-primary" type="button">
+                  <span class="ico" data-icon="send"></span><span data-i18n="btn_send">Send</span>
+                </button>
+              </div>
+            </div>
           </div>
         </section>
       </section>
@@ -803,6 +816,7 @@ input.invalid{border-color:var(--red) !important;}
   var ICONS = {
     bot: svg('<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><line x1="9" x2="9.01" y1="13" y2="13"/><line x1="15" x2="15.01" y1="13" y2="13"/>'),
     settings: svg('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>'),
+    lock: svg('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'),
     tick: svg('<polyline points="20 6 9 17 4 12"/>'),
     refresh: svg('<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>'),
     x: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
@@ -959,7 +973,7 @@ input.invalid{border-color:var(--red) !important;}
       msg_joining: 'Starting bots and joining the channel...',
       sc_title: 'Send a message', lbl_account: 'Account', lbl_text_link: 'Channel link or ID',
       hint_sc: 'Paste a text channel link, or pick a channel below.',
-      sc_channels_title: 'Or pick a channel', ph_filter: 'Filter channels...',
+      sc_channels_title: 'Text channel', ph_filter: 'Filter channels...',
       hint_ctrl_enter: 'Ctrl + Enter to send',
       sc_no_bots: 'No account is online yet', sc_need_bot: 'Start the bots first (Voice page) to send messages.',
       sc_empty: 'This account cannot post in any text channel.', sc_no_match: 'No channel matches the filter.',
@@ -1006,6 +1020,10 @@ input.invalid{border-color:var(--red) !important;}
       start_title: 'Accounts are offline', start_desc: 'Log the accounts in first. Then pick a server, the accounts and a channel.',
       btn_start_all: 'Log in all accounts', btn_stop_all: 'Stop all', vp_channels_title: 'Voice channels',
       voice_pill: '{n}/{t} in voice', msg_starting: 'Logging accounts in...',
+      msg_offline_title: 'Accounts are offline', msg_offline_desc: 'Log the accounts in on the Voice page first, then come back here to send a message.',
+      sc_from_title: 'Send from', ph_text_link: 'Or paste a channel link or ID',
+      sc_target: 'Sending to {c}', sc_no_target: 'Pick a channel first',
+      sc_readonly: 'read-only', sc_readonly_hint: 'This account cannot post in this channel.',
       gx_step_server: 'Server', gx_step_accounts: 'Choose accounts', gx_step_channel: 'Pick a voice channel to join',
       gx_select_all: 'Select all', gx_select_none: 'Clear', gx_no_accounts: 'None of your online accounts is in this server.',
       gx_not_in_voice: 'Not in voice', gx_selected: '{n}/{t} selected', gx_chat_one: 'Select exactly one account to chat',
@@ -1114,7 +1132,7 @@ input.invalid{border-color:var(--red) !important;}
       msg_joining: 'Đang khởi động bot và vào kênh...',
       sc_title: 'Gửi tin nhắn', lbl_account: 'Tài khoản', lbl_text_link: 'Link hoặc ID kênh',
       hint_sc: 'Dán link kênh chat, hoặc chọn kênh trong danh sách bên dưới.',
-      sc_channels_title: 'Hoặc chọn kênh', ph_filter: 'Lọc kênh...',
+      sc_channels_title: 'Kênh chat', ph_filter: 'Lọc kênh...',
       hint_ctrl_enter: 'Ctrl + Enter để gửi',
       sc_no_bots: 'Chưa có tài khoản nào online', sc_need_bot: 'Hãy khởi động bot trước (trang Voice) để gửi tin nhắn.',
       sc_empty: 'Tài khoản này không gửi được tin ở kênh chat nào.', sc_no_match: 'Không có kênh nào khớp bộ lọc.',
@@ -1161,6 +1179,10 @@ input.invalid{border-color:var(--red) !important;}
       start_title: 'Tài khoản chưa đăng nhập', start_desc: 'Đăng nhập tài khoản trước. Sau đó chọn server, chọn tài khoản rồi chọn kênh.',
       btn_start_all: 'Đăng nhập tất cả', btn_stop_all: 'Dừng tất cả', vp_channels_title: 'Kênh voice',
       voice_pill: '{n}/{t} trong voice', msg_starting: 'Đang đăng nhập các tài khoản...',
+      msg_offline_title: 'Tài khoản chưa đăng nhập', msg_offline_desc: 'Đăng nhập tài khoản ở trang Voice trước, rồi quay lại đây để gửi tin.',
+      sc_from_title: 'Gửi từ tài khoản', ph_text_link: 'Hoặc dán link kênh / ID',
+      sc_target: 'Gửi tới {c}', sc_no_target: 'Chọn kênh trước',
+      sc_readonly: 'chỉ đọc', sc_readonly_hint: 'Tài khoản này không gửi được tin ở kênh này.',
       gx_step_server: 'Server', gx_step_accounts: 'Chọn tài khoản', gx_step_channel: 'Chọn kênh voice để vào',
       gx_select_all: 'Chọn tất cả', gx_select_none: 'Bỏ chọn', gx_no_accounts: 'Không có tài khoản online nào ở trong server này.',
       gx_not_in_voice: 'Chưa vào voice', gx_selected: 'Đã chọn {n}/{t}', gx_chat_one: 'Chọn đúng 1 tài khoản để nhắn tin',
@@ -1293,6 +1315,7 @@ input.invalid{border-color:var(--red) !important;}
     viewTitle.textContent = t('nav_' + name);
     if (name === 'tokens' && token) { loadTokens(); }
     if (name === 'voice' && token) { renderVoicePage(); }
+    if (name === 'messages' && token) { renderMessagesPage(); }
     if (name === 'advanced') { logConsole.scrollTop = logConsole.scrollHeight; }
     window.scrollTo(0, 0);
   }
@@ -1331,7 +1354,7 @@ input.invalid{border-color:var(--red) !important;}
     viewTitle.textContent = t('nav_' + currentView);
     if (lastSummary) { renderSummary(lastSummary); }
     gxSig = null;
-    if (scChannels) { scRenderRecent(); renderBotOptions(); renderTextChannels(); }
+    scGuildSig = null;
   }
   document.addEventListener('click', function(event){
     var btn = event.target.closest('.lang-btn');
@@ -1506,7 +1529,7 @@ input.invalid{border-color:var(--red) !important;}
     renderHeader(bots);
     setTokenCount(summary.total_tokens || 0);
     scheduleVoiceRefresh();
-    renderBotOptions();
+    if (currentView === 'messages') { renderMessagesPage(); }
   }
   function statusOf(bot){
     if (bot.error) { return {label: t('status_error'), cls: 'badge-error'}; }
@@ -1779,48 +1802,6 @@ input.invalid{border-color:var(--red) !important;}
     if (SNOWFLAKE_RE.test(value)) { return {id: value}; }
     return null;
   }
-  /* Danh sách "gần đây" cho kênh chat */
-  function recentLoad(key){
-    try {
-      var list = JSON.parse(localStorage.getItem(key) || '[]');
-      return Array.isArray(list) ? list : [];
-    } catch (err) {
-      return [];
-    }
-  }
-  function recentSave(key, entry){
-    var list = recentLoad(key).filter(function(item){ return item.id !== entry.id; });
-    list.unshift(entry);
-    localStorage.setItem(key, JSON.stringify(list.slice(0, 6)));
-  }
-  function recentRemove(key, id){
-    localStorage.setItem(key, JSON.stringify(recentLoad(key).filter(function(item){ return item.id !== id; })));
-  }
-  function recentFill(key, findMeta){
-    var changed = false;
-    var list = recentLoad(key).map(function(item){
-      var meta = findMeta(item.id);
-      if (!meta || item.name) { return item; }
-      changed = true;
-      return {id: item.id, name: meta.name, guild: meta.guild_name};
-    });
-    if (changed) { localStorage.setItem(key, JSON.stringify(list)); }
-    return changed;
-  }
-  function recentRender(key, wrap, container){
-    var list = recentLoad(key);
-    wrap.classList.toggle('hidden', !list.length);
-    container.innerHTML = list.map(function(item){
-      var label = item.name
-        ? esc(item.name) + (item.guild ? ' <span class="chip-sub">· ' + esc(item.guild) + '</span>' : '')
-        : esc(item.id);
-      return '<button class="chip" type="button" data-recent-id="' + esc(item.id) + '">'
-        + '<span class="chip-text">' + label + '</span>'
-        + '<span class="chip-x" data-remove-recent="' + esc(item.id) + '" title="' + esc(t('title_remove_recent')) + '">' + icon('x') + '</span>'
-        + '</button>';
-    }).join('');
-  }
-
   var GX_KEY = 'mgl_guild';
   var startCard = $('start-card'), voicePanel = $('voice-panel'), startAllBtn = $('start-all-btn');
   var gxGuild = $('gx-guild'), qjRefresh = $('qj-refresh'), qjChannels = $('qj-channels');
@@ -1860,13 +1841,8 @@ input.invalid{border-color:var(--red) !important;}
   function loadGuilds(){
     if (!token) { return; }
     if (!isOnline()) { gxGuilds = []; renderGuildSelect(); explorerMessage(t('gx_offline')); return; }
-    api('/api/voice-channels', 'GET').then(function(data){
-      var seen = {}, list = [];
-      ((data && data.channels) || []).forEach(function(ch){
-        if (!seen[ch.guild_id]) { seen[ch.guild_id] = {id: ch.guild_id, name: ch.guild_name, here: 0}; list.push(seen[ch.guild_id]); }
-        seen[ch.guild_id].here += ch.bots_here || 0;
-      });
-      gxGuilds = list;
+    api('/api/guilds', 'GET').then(function(data){
+      gxGuilds = ((data && data.guilds) || []).map(function(g){ return {id: g.id, name: g.name, here: g.bots_here || 0}; });
       renderGuildSelect();
       if (gxGuild.value) { loadGuild(gxGuild.value === gxLoadedGuild); }
       else { explorerMessage(t('qj_empty')); }
@@ -2044,7 +2020,7 @@ input.invalid{border-color:var(--red) !important;}
   });
   gxChat.addEventListener('click', function(){
     var ids = gxSelectedIds();
-    if (ids.length === 1) { openChatPanel(ids[0], gxData && gxData.name); }
+    if (ids.length === 1) { openChatPanel(ids[0], gxData && gxData.id); }
   });
   selTools.forEach(function(button){
     button.addEventListener('click', function(){
@@ -2072,47 +2048,97 @@ input.invalid{border-color:var(--red) !important;}
     if (currentView === 'voice' && gxLoadedGuild && isOnline() && !document.hidden) { loadGuild(true); }
   }, 5000);
 
-  /* ---------- Single-account chat ---------- */
-  var SC_RECENT_KEY = 'mgl_recent_text_channels';
-  var scBot = $('sc-bot'), scChannel = $('sc-channel'), scRefresh = $('sc-refresh');
-  var scRecentWrap = $('sc-recent-wrap'), scRecent = $('sc-recent'), scFilter = $('sc-filter');
-  var scChannels = $('sc-channels'), scMessage = $('sc-message'), scSend = $('sc-send');
-  var scList = [], scListBot = null, scBotSig = null, scBusy = false;
+  /* ---------- Tin nhắn: chọn server → tài khoản gửi → kênh chat ---------- */
+  var SC_GUILD_KEY = 'mgl_msg_guild';
+  var msgOffline = $('msg-offline'), msgPanel = $('msg-panel');
+  var scGuild = $('sc-guild'), scRefresh = $('sc-refresh'), scAccountsEl = $('sc-accounts');
+  var scFilter = $('sc-filter'), scChannels = $('sc-channels'), scChannel = $('sc-channel');
+  var scMessage = $('sc-message'), scSend = $('sc-send'), scTarget = $('sc-target');
+  var scGuilds = [], scGuildSig = null, scAccount = '', scList = [], scListKey = '', scBusy = false;
 
+  function scGuildData(){
+    return scGuilds.filter(function(g){ return g.id === scGuild.value; })[0] || null;
+  }
   function scMeta(id){
     return scList.filter(function(ch){ return ch.id === id; })[0] || null;
   }
-  function scRenderRecent(){ recentRender(SC_RECENT_KEY, scRecentWrap, scRecent); }
   function scSelectedId(){
     var parsed = parseChannelInput(scChannel.value);
     return parsed && parsed.id ? parsed.id : '';
   }
-  function renderBotOptions(){
-    var bots = ((lastSummary && lastSummary.bots) || []).filter(function(bot){ return bot.ready; });
-    var options = bots.map(function(bot){
-      var user = bot.user || {};
-      return {id: String(bot.id), name: user.display_name || user.username || bot.token_masked};
+  function renderMessagesPage(){
+    msgOffline.classList.toggle('hidden', isOnline());
+    msgPanel.classList.toggle('hidden', !isOnline());
+    if (isOnline() && currentView === 'messages') { loadScGuilds(); }
+  }
+  function loadScGuilds(){
+    if (!token || !isOnline()) { return; }
+    api('/api/guilds', 'GET').then(function(data){
+      scGuilds = (data && data.guilds) || [];
+      renderScGuildSelect();
+      renderScAccounts();
+      loadTextChannels();
     });
-    // Chỉ dựng lại khi danh sách đổi, để không đóng dropdown đang mở mỗi lần state cập nhật
-    var signature = lang + '|' + options.map(function(o){ return o.id + ':' + o.name; }).join(',');
-    if (signature !== scBotSig) {
-      scBotSig = signature;
-      var current = scBot.value;
-      if (!options.length) {
-        scBot.innerHTML = '<option value="">' + esc(t('sc_no_bots')) + '</option>';
-      } else {
-        scBot.innerHTML = options.map(function(o){
-          return '<option value="' + esc(o.id) + '">' + esc(o.name) + '</option>';
-        }).join('');
-        if (options.some(function(o){ return o.id === current; })) { scBot.value = current; }
-      }
-      scBot.disabled = !options.length;
+  }
+  function renderScGuildSelect(){
+    var signature = lang + '|' + scGuilds.map(function(g){ return g.id + ':' + g.name; }).join(',');
+    if (signature === scGuildSig) { return; }
+    scGuildSig = signature;
+    var current = scGuild.value || localStorage.getItem(SC_GUILD_KEY) || localStorage.getItem(GX_KEY) || '';
+    scGuild.innerHTML = scGuilds.length
+      ? scGuilds.map(function(g){ return '<option value="' + esc(g.id) + '">' + esc(g.name) + '</option>'; }).join('')
+      : '<option value="">' + esc(t('qj_empty')) + '</option>';
+    scGuild.disabled = !scGuilds.length;
+    var pick = scGuilds.filter(function(g){ return g.id === current; })[0] || scGuilds[0];
+    if (pick) { scGuild.value = pick.id; }
+  }
+  // Gửi luôn từ đúng một tài khoản: danh sách tài khoản là kiểu chọn một
+  function renderScAccounts(){
+    var guild = scGuildData();
+    var accounts = (guild && guild.accounts) || [];
+    if (!accounts.some(function(acc){ return acc.id === scAccount; })) {
+      scAccount = accounts.length ? accounts[0].id : '';
     }
-    if (scBot.value !== scListBot) { loadTextChannels(); }
+    if (!accounts.length) {
+      scAccountsEl.innerHTML = '<div class="muted">' + esc(t('gx_no_accounts')) + '</div>';
+      return;
+    }
+    scAccountsEl.innerHTML = accounts.map(function(acc){
+      var bot = botById(acc.id) || {};
+      var user = bot.user || {};
+      var checked = acc.id === scAccount;
+      var avatar = user.avatar_url
+        ? '<img class="avatar" src="' + esc(user.avatar_url) + '" alt="">'
+        : '<span class="avatar avatar-fallback">' + icon('user') + '</span>';
+      return '<button class="gx-account radio' + (checked ? ' checked' : '') + '" type="button" role="radio" aria-checked="' + checked + '" data-sc-account="' + esc(acc.id) + '">'
+        + '<span class="gx-check">' + (checked ? icon('tick') : '') + '</span>' + avatar
+        + '<div class="gx-acc-info"><div class="gx-acc-name">' + esc(acc.name) + '</div>'
+        + '<div class="gx-acc-sub">@' + esc(user.username || '') + '</div></div></button>';
+    }).join('');
+  }
+  function loadTextChannels(){
+    var key = scGuild.value + '|' + scAccount;
+    if (!scAccount || !scGuild.value || !token) { scList = []; scListKey = ''; renderTextChannels(); return; }
+    if (key === scListKey) { renderTextChannels(); return; }
+    scListKey = key;
+    scList = [];
+    scChannels.innerHTML = '<div class="muted">' + esc(t('qj_loading')) + '</div>';
+    var guildId = scGuild.value;
+    api('/api/bots/' + encodeURIComponent(scAccount) + '/text-channels', 'GET').then(function(data){
+      if (key !== scListKey) { return; }
+      // Chỉ giữ kênh của server đang chọn
+      scList = ((data && data.channels) || []).filter(function(ch){ return ch.guild_id === guildId; });
+      renderTextChannels();
+    });
   }
   function renderTextChannels(){
-    if (!scBot.value) {
-      scChannels.innerHTML = '<div class="muted">' + esc(t('sc_need_bot')) + '</div>';
+    var selected = scSelectedId();
+    var meta = selected ? scMeta(selected) : null;
+    scTarget.textContent = selected
+      ? t('sc_target').replace('{c}', meta ? '#' + meta.name : selected)
+      : t('sc_no_target');
+    if (!scAccount) {
+      scChannels.innerHTML = '<div class="muted">' + esc(t('gx_no_accounts')) + '</div>';
       return;
     }
     if (!scList.length) {
@@ -2120,51 +2146,30 @@ input.invalid{border-color:var(--red) !important;}
       return;
     }
     var query = scFilter.value.trim().toLowerCase();
-    var selected = scSelectedId();
     var items = scList.filter(function(ch){
-      if (!query) { return true; }
-      return [ch.name, ch.guild_name, ch.category || ''].some(function(text){
-        return text.toLowerCase().indexOf(query) >= 0;
-      });
+      return !query || [ch.name, ch.category || ''].some(function(text){ return text.toLowerCase().indexOf(query) >= 0; });
     });
     if (!items.length) {
       scChannels.innerHTML = '<div class="muted">' + esc(t('sc_no_match')) + '</div>';
       return;
     }
-    var groups = {}, order = [];
-    items.forEach(function(ch){
-      if (!groups[ch.guild_id]) { groups[ch.guild_id] = {name: ch.guild_name, items: []}; order.push(ch.guild_id); }
-      groups[ch.guild_id].items.push(ch);
-    });
-    scChannels.innerHTML = order.map(function(guildId){
-      var group = groups[guildId];
-      var lastCategory = null;
-      return '<div class="qj-group"><div class="qj-guild" title="' + esc(group.name) + '">' + esc(group.name) + '</div>'
-        + group.items.map(function(ch){
-          var heading = '';
-          if (ch.category && ch.category !== lastCategory) {
-            heading = '<div class="qj-cat">' + esc(ch.category) + '</div>';
-          }
-          lastCategory = ch.category;
-          return heading
-            + '<button class="qj-channel' + (ch.id === selected ? ' selected' : '') + '" type="button" data-text-channel-id="' + esc(ch.id) + '">'
-            + icon('hash') + '<span class="name">' + esc(ch.name) + '</span></button>';
-        }).join('')
-        + '</div>';
-    }).join('');
-  }
-  function loadTextChannels(){
-    var botId = scBot.value;
-    scListBot = botId;
-    scList = [];
-    if (!botId || !token) { renderTextChannels(); return; }
-    scChannels.innerHTML = '<div class="muted">' + esc(t('qj_loading')) + '</div>';
-    api('/api/bots/' + encodeURIComponent(botId) + '/text-channels', 'GET').then(function(data){
-      if (botId !== scListBot) { return; }
-      scList = (data && data.channels) || [];
-      renderTextChannels();
-      if (recentFill(SC_RECENT_KEY, scMeta)) { scRenderRecent(); }
-    });
+    var lastCategory = null;
+    scChannels.innerHTML = '<div class="qj-group">' + items.map(function(ch){
+      var heading = '';
+      if (ch.category && ch.category !== lastCategory) {
+        heading = '<div class="qj-cat">' + esc(ch.category) + '</div>';
+      }
+      lastCategory = ch.category;
+      if (ch.can_send === false) {
+        return heading
+          + '<div class="qj-channel readonly" title="' + esc(t('sc_readonly_hint')) + '">'
+          + icon('lock') + '<span class="name">' + esc(ch.name) + '</span>'
+          + '<span class="meta">' + esc(t('sc_readonly')) + '</span></div>';
+      }
+      return heading
+        + '<button class="qj-channel' + (ch.id === selected ? ' selected' : '') + '" type="button" data-text-channel-id="' + esc(ch.id) + '">'
+        + icon('hash') + '<span class="name">' + esc(ch.name) + '</span></button>';
+    }).join('') + '</div>';
   }
   function selectTextChannel(id){
     scChannel.value = id;
@@ -2174,47 +2179,48 @@ input.invalid{border-color:var(--red) !important;}
   }
   function sendSingle(){
     if (scBusy) { return; }
-    var botId = scBot.value;
     var raw = scChannel.value.trim();
     var parsed = parseChannelInput(raw);
     var message = scMessage.value.trim();
-    if (!botId) { toast(t('sc_need_bot'), 'error'); return; }
+    if (!scAccount) { toast(t('gx_no_accounts'), 'error'); return; }
     if (parsed && parsed.invite) { toast(t('err_invite_text'), 'error'); return; }
     if (!parsed) {
       scChannel.classList.add('invalid');
-      toast(t(raw ? 'err_bad_link' : 'err_enter_channel_id'), 'error');
+      toast(t(raw ? 'err_bad_link' : 'sc_no_target'), 'error');
       return;
     }
     if (!message) { toast(t('err_enter_message'), 'error'); return; }
     scBusy = true;
     scSend.disabled = true;
-    api('/api/chat/single', 'POST', {bot_id: botId, channel_id: parsed.id, message: message}).then(function(data){
+    api('/api/chat/single', 'POST', {bot_id: scAccount, channel_id: parsed.id, message: message}).then(function(data){
       scBusy = false;
       scSend.disabled = false;
       if (!data || !data.sent) { toast(t('err_request_failed'), 'error'); return; }
       toast(t('msg_chat_sent'), 'success');
       scMessage.value = '';
-      var meta = scMeta(parsed.id);
-      var previous = recentLoad(SC_RECENT_KEY).filter(function(item){ return item.id === parsed.id; })[0] || {};
-      recentSave(SC_RECENT_KEY, {
-        id: parsed.id,
-        name: meta ? meta.name : (previous.name || ''),
-        guild: meta ? meta.guild_name : (previous.guild || '')
-      });
-      scRenderRecent();
     });
   }
-  function openChatPanel(botId, guildName){
+  // Từ trang Voice: nút Nhắn tin mở sẵn đúng server và tài khoản đã tick
+  function openChatPanel(botId, guildId){
+    if (guildId) { localStorage.setItem(SC_GUILD_KEY, guildId); scGuildSig = null; }
+    scAccount = botId;
     showView('messages');
-    scFilter.value = guildName || '';
-    if ([].some.call(scBot.options, function(option){ return option.value === botId; })) {
-      scBot.value = botId;
-    }
-    if (scBot.value !== scListBot) { loadTextChannels(); } else { renderTextChannels(); }
     scMessage.focus();
   }
-  scBot.addEventListener('change', loadTextChannels);
-  scRefresh.addEventListener('click', loadTextChannels);
+  scGuild.addEventListener('change', function(){
+    localStorage.setItem(SC_GUILD_KEY, scGuild.value);
+    scChannel.value = '';
+    renderScAccounts();
+    loadTextChannels();
+  });
+  scRefresh.addEventListener('click', function(){ scListKey = ''; loadScGuilds(); });
+  scAccountsEl.addEventListener('click', function(event){
+    var item = event.target.closest('[data-sc-account]');
+    if (!item) { return; }
+    scAccount = item.getAttribute('data-sc-account');
+    renderScAccounts();
+    loadTextChannels();
+  });
   scFilter.addEventListener('input', renderTextChannels);
   scChannel.addEventListener('input', function(){
     scChannel.classList.remove('invalid');
@@ -2224,19 +2230,12 @@ input.invalid{border-color:var(--red) !important;}
     var item = event.target.closest('[data-text-channel-id]');
     if (item) { selectTextChannel(item.getAttribute('data-text-channel-id')); }
   });
-  scRecent.addEventListener('click', function(event){
-    var remove = event.target.closest('[data-remove-recent]');
-    if (remove) { recentRemove(SC_RECENT_KEY, remove.getAttribute('data-remove-recent')); scRenderRecent(); return; }
-    var chip = event.target.closest('[data-recent-id]');
-    if (chip) { selectTextChannel(chip.getAttribute('data-recent-id')); }
-  });
   scMessage.addEventListener('keydown', function(event){
     if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { sendSingle(); }
   });
   scSend.addEventListener('click', sendSingle);
 
   /* ---------- Init ---------- */
-  scRenderRecent();
   injectAssets();
   applyLanguage();
   renderEmojiPicker();

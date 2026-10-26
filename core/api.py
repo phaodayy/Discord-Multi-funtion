@@ -227,6 +227,12 @@ async def get_voice_channel_members(channel_id: str) -> dict[str, Any]:
     return detail
 
 
+@router.get("/guilds")
+async def get_guilds() -> dict[str, Any]:
+    """Server mà các tài khoản online đang tham gia."""
+    return {"guilds": bot_manager.get_guilds()}
+
+
 @router.get("/guilds/{guild_id}/voice")
 async def get_guild_voice(guild_id: str) -> dict[str, Any]:
     """Các voice channel của một server kèm người đang ở trong."""

@@ -1088,7 +1088,9 @@ class BotManager:
             try:
                 me = guild.me
                 for channel in guild.text_channels:
-                    if me is not None and not channel.permissions_for(me).send_messages:
+                    perms = channel.permissions_for(me) if me is not None else None
+                    # Kênh không xem được thì bỏ; kênh chỉ đọc vẫn liệt kê để khớp với Discord
+                    if perms is not None and not perms.view_channel:
                         continue
                     channels.append(
                         {
@@ -1097,6 +1099,7 @@ class BotManager:
                             "guild_id": str(guild.id),
                             "guild_name": guild.name,
                             "category": channel.category.name if channel.category else None,
+                            "can_send": perms is None or bool(perms.send_messages),
                         }
                     )
             except Exception as exc:
@@ -1133,6 +1136,22 @@ class BotManager:
                 "channels": [self._voice_channel_detail(channel, own_ids) for channel in channels],
             }
         return None
+
+    def get_guilds(self) -> list[dict[str, Any]]:
+        """Các server mà ít nhất một tài khoản online đang tham gia, kèm tài khoản trong đó."""
+        merged: dict[int, dict[str, Any]] = {}
+        for bot in self.bots:
+            if not bot.is_ready() or bot.user is None:
+                continue
+            current = bot._current_voice_channel()
+            for guild in bot.guilds:
+                entry = merged.setdefault(
+                    guild.id, {"id": str(guild.id), "name": guild.name, "accounts": [], "bots_here": 0}
+                )
+                entry["accounts"].append({"id": bot.bot_id, "name": getattr(bot.user, "display_name", bot.user.name)})
+                if current is not None and current.guild.id == guild.id:
+                    entry["bots_here"] += 1
+        return sorted(merged.values(), key=lambda item: item["name"].lower())
 
     def _guild_accounts(self, guild_id: int) -> list[dict[str, Any]]:
         """Các tài khoản token đang online và là thành viên của server."""
