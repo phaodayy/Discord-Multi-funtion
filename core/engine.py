@@ -256,6 +256,25 @@ class Bot(discord.Client):
             asyncio.create_task(self.sweep_friend_requests())
         self.notify_state_change()
 
+    async def _accept_incoming(self, rel: Any) -> bool:
+        """Nhận một lời mời kết bạn, né được anti-spam 80013."""
+        try:
+            await rel.accept()
+            return True
+        except Exception as exc:
+            # 80013 = Discord bắt bước "Confirm" bổ sung. Né bằng cách gửi lại
+            # friend request — hai outgoing khớp nhau = thành bạn ngay.
+            if "80013" in str(exc):
+                try:
+                    await self.send_friend_request(rel.user)
+                    return True
+                except Exception as exc2:
+                    app_logger.warning(
+                        "%s send_friend_request fallback lỗi: %s", self.user, exc2
+                    )
+                    return False
+            raise
+
     async def on_relationship_add(self, relationship: Any) -> None:
         """Tự nhận lời mời kết bạn khi có người gửi tới."""
         if not self.auto_accept_friends:
@@ -263,10 +282,10 @@ class Bot(discord.Client):
         try:
             if int(getattr(relationship.type, "value", 0)) == 3:  # incoming_request
                 await asyncio.sleep(random.uniform(0.4, 1.8))
-                await relationship.accept()
-                app_logger.info(
-                    "%s đã accept kết bạn từ %s", self.user, relationship.user
-                )
+                if await self._accept_incoming(relationship):
+                    app_logger.info(
+                        "%s đã accept kết bạn từ %s", self.user, relationship.user
+                    )
         except Exception as exc:
             app_logger.warning("%s accept kết bạn lỗi: %s", self.user, exc)
 
@@ -289,9 +308,9 @@ class Bot(discord.Client):
         )
         for rel in incoming:
             try:
-                await rel.accept()
-                count += 1
-                app_logger.info("%s đã accept kết bạn từ %s", self.user, rel.user)
+                if await self._accept_incoming(rel):
+                    count += 1
+                    app_logger.info("%s đã accept kết bạn từ %s", self.user, rel.user)
                 await asyncio.sleep(random.uniform(0.5, 1.5))
             except Exception as exc:
                 app_logger.warning("%s accept kết bạn lỗi: %s", self.user, exc)
