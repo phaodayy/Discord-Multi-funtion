@@ -251,45 +251,18 @@ class Bot(discord.Client):
         # Chưa gán kênh (chỉ đăng nhập để chọn kênh sau) thì không join
         if self.target_channel_id:
             await self.join_vc()
-        # Quét các lời mời kết bạn còn tồn — nhận hết nếu bật auto-accept
-        if self.auto_accept_friends:
-            asyncio.create_task(self.sweep_friend_requests())
+        # Không auto-sweep lúc login — chỉ dựa vào event on_relationship_add
+        # và nút Sweep tay. (Trước đây sweep ở đây gây spam '.' mỗi lần restart.)
         self.notify_state_change()
 
     async def _accept_incoming(self, rel: Any) -> bool:
-        """Nhận một lời mời kết bạn, cố né anti-spam 80013."""
-        async def _try(step: str, coro) -> bool:
-            try:
-                await coro
-                return True
-            except Exception as exc:
-                app_logger.debug("%s accept[%s] lỗi: %s", self.user, step, exc)
-                return False
-
-        # (1) Accept thẳng
-        if await _try("accept", rel.accept()):
-            return True
-        # (2) Mở DM channel rồi accept
+        """Nhận một lời mời kết bạn (chỉ thử accept thẳng, Discord đang chặn mọi cách khác)."""
         try:
-            dm = await rel.user.create_dm()
-        except Exception as exc:
-            app_logger.warning("%s không mở được DM với %s: %s", self.user, rel.user, exc)
-            dm = None
-        if dm is not None:
-            if await _try("dm+accept", rel.accept()):
-                return True
-            # (3) Gửi 1 tin đơn vào DM rồi thử accept lại
-            try:
-                await dm.send(".")
-                await asyncio.sleep(0.5)
-            except Exception as exc:
-                app_logger.debug("%s dm.send lỗi: %s", self.user, exc)
-            if await _try("send+accept", rel.accept()):
-                return True
-        # (4) Gửi friend request ngược
-        if await _try("send_friend_request", self.send_friend_request(rel.user)):
+            await rel.accept()
             return True
-        return False
+        except Exception as exc:
+            app_logger.debug("%s accept lỗi: %s", self.user, exc)
+            return False
 
     async def on_relationship_add(self, relationship: Any) -> None:
         """Tự nhận lời mời kết bạn khi có người gửi tới."""
