@@ -280,7 +280,7 @@ class Bot(discord.Client):
                 return True
             # (3) Gửi 1 tin đơn vào DM rồi thử accept lại
             try:
-                await dm.send("👋")
+                await dm.send(".")
                 await asyncio.sleep(0.5)
             except Exception as exc:
                 app_logger.debug("%s dm.send lỗi: %s", self.user, exc)
