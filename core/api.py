@@ -67,6 +67,18 @@ class LeaveVoiceBody(BaseModel):
     bot_ids: list[str] | None = None
 
 
+class FriendSweepBody(BaseModel):
+    """Body quét/accept lời mời kết bạn."""
+
+    bot_ids: list[str] | None = None
+
+
+class FriendToggleBody(BaseModel):
+    """Body bật/tắt tự accept kết bạn trên mọi bot."""
+
+    enabled: bool
+
+
 class LeaveServerBody(BaseModel):
     """Body cho bot rời server (guild)."""
 
@@ -265,6 +277,20 @@ async def rename(body: RenameBody) -> dict[str, Any]:
 
     affected = await bot_manager.rename_all(body.name)
     return {"success": True, "affected": affected}
+
+
+@router.post("/friends/sweep")
+async def sweep_friends(body: FriendSweepBody) -> dict[str, Any]:
+    """Quét toàn bộ lời mời kết bạn pending và accept."""
+    result = await bot_manager.sweep_friend_requests(body.bot_ids)
+    return {"success": True, **result}
+
+
+@router.post("/friends/auto")
+async def toggle_auto_friends(body: FriendToggleBody) -> dict[str, Any]:
+    """Bật/tắt tự nhận kết bạn mỗi khi có người gửi (áp cho mọi bot)."""
+    affected = bot_manager.set_auto_accept_friends(body.enabled)
+    return {"success": True, "enabled": body.enabled, "affected": affected}
 
 
 @router.post("/leave-voice")

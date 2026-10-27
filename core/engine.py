@@ -129,6 +129,8 @@ class Bot(discord.Client):
         self.error: str | None = None
         self.ready_at: float | None = None
         self.on_state_change: Callable[[BotState], Any] | None = None
+        # Tự nhận lời mời kết bạn (có thể tắt bằng env AUTO_ACCEPT_FRIENDS=0)
+        self.auto_accept_friends: bool = os.getenv("AUTO_ACCEPT_FRIENDS", "1") != "0"
 
     # ------------------------------------------------------------------
     # State helpers
@@ -249,7 +251,43 @@ class Bot(discord.Client):
         # Chưa gán kênh (chỉ đăng nhập để chọn kênh sau) thì không join
         if self.target_channel_id:
             await self.join_vc()
+        # Quét các lời mời kết bạn còn tồn — nhận hết nếu bật auto-accept
+        if self.auto_accept_friends:
+            asyncio.create_task(self.sweep_friend_requests())
         self.notify_state_change()
+
+    async def on_relationship_add(self, relationship: Any) -> None:
+        """Tự nhận lời mời kết bạn khi có người gửi tới."""
+        if not self.auto_accept_friends:
+            return
+        try:
+            if int(getattr(relationship.type, "value", 0)) == 3:  # incoming_request
+                await asyncio.sleep(random.uniform(0.4, 1.8))
+                await relationship.accept()
+                app_logger.info(
+                    "%s đã accept kết bạn từ %s", self.user, relationship.user
+                )
+        except Exception as exc:
+            app_logger.warning("%s accept kết bạn lỗi: %s", self.user, exc)
+
+    async def sweep_friend_requests(self) -> int:
+        """Quét và accept toàn bộ lời mời kết bạn đang chờ. Trả số đã accept."""
+        count = 0
+        try:
+            relationships = list(self.relationships)
+        except Exception as exc:
+            app_logger.warning("%s không đọc được relationships: %s", self.user, exc)
+            return 0
+        for rel in relationships:
+            try:
+                if int(getattr(rel.type, "value", 0)) == 3:
+                    await rel.accept()
+                    count += 1
+                    app_logger.info("%s đã accept kết bạn từ %s", self.user, rel.user)
+                    await asyncio.sleep(random.uniform(0.5, 1.5))
+            except Exception as exc:
+                app_logger.warning("%s accept kết bạn lỗi: %s", self.user, exc)
+        return count
 
     async def on_message(self, message: discord.Message) -> None:
         """Lắng nghe lệnh chat đặc biệt ``<!nội dung>`` từ owner."""
@@ -1182,6 +1220,34 @@ class BotManager:
         left = sum(1 for ok in results if ok)
         app_logger.info("Đã cho %d/%d bot rời server %s", left, len(targets), guild_id)
         return {"left": left, "total": len(targets)}
+
+    async def sweep_friend_requests(
+        self, bot_ids: list[int | str] | None = None
+    ) -> dict[str, Any]:
+        """Nhận hết lời mời kết bạn đang chờ cho các acc chỉ định (hoặc tất cả)."""
+        if bot_ids is None:
+            targets = [bot for bot in self.bots if bot.is_ready()]
+        else:
+            targets = [
+                bot for bot in (self._find_bot(bid) for bid in bot_ids)
+                if bot is not None and bot.is_ready()
+            ]
+        if not targets:
+            return {"accepted": 0, "bots": 0}
+        counts = await asyncio.gather(
+            *(bot.sweep_friend_requests() for bot in targets), return_exceptions=True
+        )
+        total = sum(c for c in counts if isinstance(c, int))
+        app_logger.info(
+            "Sweep kết bạn: accept %d lời mời trên %d acc", total, len(targets)
+        )
+        return {"accepted": total, "bots": len(targets)}
+
+    def set_auto_accept_friends(self, enabled: bool) -> int:
+        """Bật/tắt tự accept kết bạn cho mọi bot."""
+        for bot in self.bots:
+            bot.auto_accept_friends = bool(enabled)
+        return len(self.bots)
 
     async def leave_voice(self, bot_ids: list[int | str] | None = None) -> int:
         """Rời voice channel cho một hoặc toàn bộ bot ready; giữ nguyên đăng nhập."""

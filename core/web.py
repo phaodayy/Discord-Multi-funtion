@@ -441,6 +441,8 @@ label{display:flex;flex-direction:column;gap:5px;color:var(--text-muted);font-si
 .pf-main textarea{resize:vertical;min-height:76px;}
 .pf-color-row{display:flex;align-items:center;gap:10px;}
 .pf-color-row input[type=color]{width:50px;height:32px;border:1px solid var(--border);background:transparent;border-radius:6px;cursor:pointer;}
+.toggle{display:inline-flex;align-items:center;gap:8px;color:var(--text-muted);font-size:12px;cursor:pointer;}
+.toggle input{width:16px;height:16px;cursor:pointer;}
 @media (max-width:620px){ .pf-grid{grid-template-columns:1fr;} }
 .gx-accounts{display:flex;flex-direction:column;gap:4px;}
 .gx-account{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s;}
@@ -1010,6 +1012,22 @@ input.invalid{border-color:var(--red) !important;}
       <!-- ===== Advanced ===== -->
       <section class="view hidden" data-view="advanced">
         <section class="panel">
+          <div class="panel-head">
+            <h2 data-i18n="fr_title">Auto-accept friends</h2>
+            <label class="toggle">
+              <input id="fr-toggle" type="checkbox" checked>
+              <span data-i18n="fr_toggle_label">On</span>
+            </label>
+          </div>
+          <p class="hint" data-i18n="fr_hint">When on, every online account auto-accepts incoming friend requests. Button below sweeps any pending requests right now.</p>
+          <div class="control-row">
+            <button id="fr-sweep" class="btn btn-primary" type="button">
+              <span class="ico" data-icon="tick"></span><span data-i18n="fr_sweep">Accept all pending</span>
+            </button>
+            <span class="hint" id="fr-result"></span>
+          </div>
+        </section>
+        <section class="panel">
           <div class="panel-head"><h2 data-i18n="ov_title">OAuth Verify (shop/community)</h2></div>
           <p class="hint" data-i18n="ov_hint">Paste the OAuth URL from the shop's Verify button (right-click button → Copy link). The picked accounts (or all online if none) authorize the app and complete the shop's callback automatically.</p>
           <div class="control-row">
@@ -1434,6 +1452,11 @@ input.invalid{border-color:var(--red) !important;}
       ov_need_url: 'Paste the OAuth URL first.',
       pk_oauth_title: 'OAuth2 link — click to authorize with the picked accounts',
       pk_oauth_tag: 'OAuth / Verify',
+      fr_title: 'Auto-accept friends',
+      fr_toggle_label: 'On',
+      fr_hint: 'When on, every online account auto-accepts incoming friend requests. Button below also sweeps any that are already pending.',
+      fr_sweep: 'Accept all pending',
+      fr_result: '{n} friend request(s) accepted across {b} account(s).',
       btn_rename_one: 'Rename this account',
       ph_rename_one: 'New nickname (reset = default)',
       msg_renamed_one: 'Renamed to "{n}".',
@@ -1690,6 +1713,11 @@ input.invalid{border-color:var(--red) !important;}
       ov_need_url: 'Hãy dán URL OAuth trước.',
       pk_oauth_title: 'Link OAuth2 — bấm để authorize bằng các tài khoản đã tick',
       pk_oauth_tag: 'OAuth / Verify',
+      fr_title: 'Tự nhận kết bạn',
+      fr_toggle_label: 'Bật',
+      fr_hint: 'Khi bật, mọi acc online sẽ tự accept các lời mời kết bạn mới. Nút dưới cũng quét sạch các lời mời đang chờ.',
+      fr_sweep: 'Nhận hết lời mời đang chờ',
+      fr_result: 'Đã accept {n} lời mời trên {b} tài khoản.',
       btn_rename_one: 'Đổi tên tài khoản này',
       ph_rename_one: 'Nickname mới (reset = mặc định)',
       msg_renamed_one: 'Đã đổi tên thành "{n}".',
@@ -3604,6 +3632,23 @@ input.invalid{border-color:var(--red) !important;}
   }
   ovRun.addEventListener('click', runOAuthVerify);
   ovUrl.addEventListener('keydown', function(e){ if (e.key === 'Enter') { runOAuthVerify(); } });
+
+  /* ---------- Auto-accept friends ---------- */
+  var frToggle = $('fr-toggle'), frSweep = $('fr-sweep'), frResult = $('fr-result');
+  frToggle.addEventListener('change', function(){
+    api('/api/friends/auto', 'POST', {enabled: frToggle.checked});
+  });
+  frSweep.addEventListener('click', function(){
+    frSweep.disabled = true;
+    frResult.textContent = '';
+    api('/api/friends/sweep', 'POST', {bot_ids: null}).then(function(data){
+      frSweep.disabled = false;
+      if (!data || !data.success) { toast(t('err_request_failed'), 'error'); return; }
+      var msg = t('fr_result').replace('{n}', data.accepted || 0).replace('{b}', data.bots || 0);
+      frResult.textContent = msg;
+      toast(msg, 'success');
+    });
+  });
 
   /* ---------- Users: quản lý từng tài khoản ---------- */
   var usersListEl = $('users-list'), usersFilter = $('users-filter'), usersStatus = $('users-status');
