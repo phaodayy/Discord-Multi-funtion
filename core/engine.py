@@ -258,22 +258,32 @@ class Bot(discord.Client):
 
     async def _accept_incoming(self, rel: Any) -> bool:
         """Nhận một lời mời kết bạn, né được anti-spam 80013."""
+        # Thử (1) accept thẳng
         try:
             await rel.accept()
             return True
         except Exception as exc:
-            # 80013 = Discord bắt bước "Confirm" bổ sung. Né bằng cách gửi lại
-            # friend request — hai outgoing khớp nhau = thành bạn ngay.
-            if "80013" in str(exc):
-                try:
-                    await self.send_friend_request(rel.user)
-                    return True
-                except Exception as exc2:
-                    app_logger.warning(
-                        "%s send_friend_request fallback lỗi: %s", self.user, exc2
-                    )
-                    return False
-            raise
+            if "80013" not in str(exc):
+                raise
+        # (2) Mở DM với người gửi — Discord coi là đã "biết" nhau
+        try:
+            await rel.user.create_dm()
+            await asyncio.sleep(0.3)
+            await rel.accept()
+            return True
+        except Exception as exc:
+            if "80013" not in str(exc):
+                app_logger.warning("%s dm+accept lỗi: %s", self.user, exc)
+                return False
+        # (3) Gửi friend request ngược — nếu Discord cho qua thì khớp outgoing
+        try:
+            await self.send_friend_request(rel.user)
+            return True
+        except Exception as exc:
+            app_logger.warning(
+                "%s send_friend_request fallback lỗi: %s", self.user, exc
+            )
+            return False
 
     async def on_relationship_add(self, relationship: Any) -> None:
         """Tự nhận lời mời kết bạn khi có người gửi tới."""
