@@ -273,18 +273,26 @@ class Bot(discord.Client):
     async def sweep_friend_requests(self) -> int:
         """Quét và accept toàn bộ lời mời kết bạn đang chờ. Trả số đã accept."""
         count = 0
+        # Thử fetch mới để tránh cache rỗng; fallback về self.relationships
         try:
-            relationships = list(self.relationships)
-        except Exception as exc:
-            app_logger.warning("%s không đọc được relationships: %s", self.user, exc)
-            return 0
-        for rel in relationships:
+            relationships = await self.fetch_relationships()
+        except Exception:
             try:
-                if int(getattr(rel.type, "value", 0)) == 3:
-                    await rel.accept()
-                    count += 1
-                    app_logger.info("%s đã accept kết bạn từ %s", self.user, rel.user)
-                    await asyncio.sleep(random.uniform(0.5, 1.5))
+                relationships = list(self.relationships)
+            except Exception as exc:
+                app_logger.warning("%s không đọc được relationships: %s", self.user, exc)
+                return 0
+        incoming = [r for r in relationships if int(getattr(r.type, "value", 0)) == 3]
+        app_logger.info(
+            "%s có %d/%d relationship, %d incoming request",
+            self.user, len(incoming), len(relationships), len(incoming),
+        )
+        for rel in incoming:
+            try:
+                await rel.accept()
+                count += 1
+                app_logger.info("%s đã accept kết bạn từ %s", self.user, rel.user)
+                await asyncio.sleep(random.uniform(0.5, 1.5))
             except Exception as exc:
                 app_logger.warning("%s accept kết bạn lỗi: %s", self.user, exc)
         return count
